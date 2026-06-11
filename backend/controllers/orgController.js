@@ -1,0 +1,265 @@
+const Organization = require('../models/Organization');
+const User = require('../models/User');
+const { sendEmail } = require('../utils/sendEmail');
+
+// @desc    Get all organizations (Super Admin only)
+// @route   GET /api/admin/organizations
+// @access  Private/SuperAdmin
+exports.getAllOrganizations = async (req, res, next) => {
+  try {
+    const orgs = await Organization.find().sort({ createdAt: -1 });
+    
+    // Attach the owner email to each org for display
+    const orgsWithOwner = await Promise.all(orgs.map(async (org) => {
+      const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true }).select('name email phone');
+      return { ...org.toObject(), owner };
+    }));
+
+    res.status(200).json({ success: true, count: orgsWithOwner.length, data: orgsWithOwner });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Approve organization
+// @route   PUT /api/admin/organizations/:id/approve
+// @access  Private/SuperAdmin
+exports.approveOrganization = async (req, res, next) => {
+  try {
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
+
+    org.status = 'approved';
+    org.verified = true;
+    org.declineRemark = '';
+    await org.save();
+
+    const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
+    
+    if (owner) {
+      try {
+        await sendEmail({
+          to: owner.email,
+          subject: 'Welcome to STR-DRG ERP - Workspace Approved!',
+          html: `<h2>Congratulations ${owner.name}!</h2>
+                 <p>Your workspace <b>${org.name}</b> has been approved.</p>
+                 <p>You can now log in and start using the system.</p>
+                 <a href="http://localhost:3000/login">Click here to Login</a>`
+        });
+      } catch (e) {
+        console.error('Email failed:', e);
+      }
+    }
+
+    res.status(200).json({ success: true, data: org });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Decline organization
+// @route   PUT /api/admin/organizations/:id/decline
+// @access  Private/SuperAdmin
+exports.declineOrganization = async (req, res, next) => {
+  try {
+    const { remark } = req.body;
+    if (!remark) return res.status(400).json({ success: false, message: 'Remark is required for declining' });
+
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
+
+    org.status = 'declined';
+    org.verified = false;
+    org.declineRemark = remark;
+    await org.save();
+
+    const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
+    
+    if (owner) {
+      try {
+        await sendEmail({
+          to: owner.email,
+          subject: 'STR-DRG ERP - Workspace Application Declined',
+          html: `<h2>Application Declined</h2>
+                 <p>Unfortunately, your application for workspace <b>${org.name}</b> was declined.</p>
+                 <p><b>Reason:</b> ${remark}</p>`
+        });
+      } catch (e) {
+        console.error('Email failed:', e);
+      }
+    }
+
+    res.status(200).json({ success: true, data: org });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create organization directly (Main Super Admin only)
+// @route   POST /api/organizations
+// @access  Private/SuperAdmin
+exports.createOrganization = async (req, res, next) => {
+  try {
+    const { name, industry, address, adminName, adminEmail, adminPhone, adminPassword } = req.body;
+
+    // Check if email already in use
+    const existingUser = await User.findOne({ email: adminEmail });
+    if (existingUser) return res.status(400).json({ success: false, message: 'Admin email already registered' });
+
+    // Create Organization as verified directly
+    const organization = await Organization.create({
+      name,
+      industry,
+      address,
+      contactEmail: adminEmail,
+      contactPhone: adminPhone,
+      verified: true,
+      status: 'approved'
+    });
+
+    // Create Super Admin User for this org
+    await User.create({
+      name: adminName,
+      email: adminEmail,
+      password: adminPassword,
+      phone: adminPhone,
+      role: 'super_admin',
+      organizationId: organization._id,
+      isOrgOwner: true
+    });
+
+    res.status(201).json({ success: true, data: organization });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const OTP = require('../models/OTP');
+
+// @desc    Force reverification of an organization using OTP
+// @route   POST /api/admin/organizations/:id/force-reverify
+// @access  Private/SuperAdmin (Main Platform Admin)
+exports.forceReverify = async (req, res, next) => {
+  try {
+    const org = await Organization.findById(req.params.id);
+    if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
+
+    org.requiresReverification = true;
+    await org.save();
+
+    const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
+    
+    if (owner) {
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Delete existing OTPs for this email
+      await OTP.deleteMany({ email: owner.email });
+      
+      // Create new OTP
+      await OTP.create({
+        email: owner.email,
+        otpCode: otp
+      });
+
+      try {
+        await sendEmail({
+          to: owner.email,
+          subject: 'Action Required: Reverification Needed',
+          html: `<h2>Reverification Required</h2>
+                 <p>Your workspace <b>${org.name}</b> requires reverification.</p>
+                 <p>Your OTP code is: <h3 style="color: #4F46E5; letter-spacing: 2px;">${otp}</h3></p>
+                 <p>Please enter this code on the platform to restore access.</p>`
+        });
+      } catch (e) {
+        console.error('Email failed:', e);
+      }
+    }
+
+    res.status(200).json({ success: true, message: 'Reverification enforced and OTP sent' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify the OTP to clear reverification lock
+// @route   POST /api/admin/organizations/reverify-otp
+// @access  Private (Org Admin)
+exports.reverifyOTP = async (req, res, next) => {
+  try {
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ success: false, message: 'Please provide an OTP' });
+
+    // Find the owner of this organization
+    const owner = await User.findOne({ organizationId: req.user.organizationId, isOrgOwner: true });
+    if (!owner) {
+      return res.status(404).json({ success: false, message: 'Organization owner not found' });
+    }
+
+    // Verify OTP against the owner's email
+    const otpRecord = await OTP.findOne({ email: owner.email, otpCode: otp });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    // Clear reverification flag
+    const org = await Organization.findById(req.user.organizationId);
+    if (org) {
+      org.requiresReverification = false;
+      org.lastVerifiedAt = new Date();
+      await org.save();
+    }
+
+    // Delete OTP
+    await OTP.deleteMany({ email: owner.email });
+
+    res.status(200).json({ success: true, message: 'Reverification successful' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Resend the OTP for reverification
+// @route   POST /api/admin/organizations/resend-reverify-otp
+// @access  Private (Org Admin)
+exports.resendReverifyOTP = async (req, res, next) => {
+  try {
+    const org = await Organization.findById(req.user.organizationId);
+    if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
+
+    // Find the owner
+    const owner = await User.findOne({ organizationId: req.user.organizationId, isOrgOwner: true });
+    if (!owner) {
+      return res.status(404).json({ success: false, message: 'Organization owner not found' });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Delete existing OTPs
+    await OTP.deleteMany({ email: owner.email });
+    
+    // Create new OTP
+    await OTP.create({
+      email: owner.email,
+      otpCode: otp
+    });
+
+    try {
+      await sendEmail({
+        to: owner.email,
+        subject: 'Your New Reverification OTP',
+        html: `<h2>Reverification Required</h2>
+               <p>Your workspace <b>${org.name}</b> requires reverification.</p>
+               <p>Your new OTP code is: <h3 style="color: #4F46E5; letter-spacing: 2px;">${otp}</h3></p>
+               <p>Please enter this code on the platform to restore access.</p>`
+      });
+    } catch (e) {
+      console.error('Email failed:', e);
+    }
+
+    res.status(200).json({ success: true, message: 'A new OTP has been sent to your email' });
+  } catch (error) {
+    next(error);
+  }
+};

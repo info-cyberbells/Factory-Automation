@@ -1,0 +1,28 @@
+const express = require('express');
+const router = express.Router();
+const {
+  getAllOrganizations,
+  approveOrganization,
+  declineOrganization,
+  forceReverify,
+  reverifyOTP,
+  resendReverifyOTP,
+  createOrganization
+} = require('../controllers/orgController');
+const { protect } = require('../middleware/auth');
+const { authorize } = require('../middleware/rbac');
+
+router.use(protect);
+
+// Organization management (only for Main Super Admin)
+router.get('/', authorize('super_admin'), getAllOrganizations);
+router.post('/', authorize('super_admin'), createOrganization);
+router.put('/:id/approve', authorize('super_admin'), approveOrganization);
+router.put('/:id/decline', authorize('super_admin'), declineOrganization);
+
+// Reverification Routes
+router.post('/:id/force-reverify', authorize('super_admin'), forceReverify);
+router.post('/reverify-otp', reverifyOTP); // Any org admin can call
+router.post('/resend-reverify-otp', resendReverifyOTP); // Any org admin can call
+
+module.exports = router;
