@@ -9,7 +9,8 @@ const Organization = require('../models/Organization');
 
 async function updateLogos() {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/str-drg-erp'; // fallback
+    // const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/str-drg-erp'; // fallback
+    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/trackbells-erp'; // fallback
     console.log('Connecting to:', mongoUri);
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB successfully!');

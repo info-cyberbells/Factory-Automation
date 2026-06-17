@@ -10,7 +10,8 @@ import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || `http://49.13.70.253:9898`;
 
 const SalesDashboard = () => {
   const { user } = useAuth();
@@ -443,7 +444,10 @@ const SalesDashboard = () => {
                       <td style={{ fontWeight: 700 }}>{log.quantity} {log.unit}</td>
                       <td style={{ fontWeight: 700, color: 'var(--success)' }}>{log.invoiceNumber}</td>
                       <td>
-                        <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.8rem' }}>
+                        {/* <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.8rem' }}>
+                          View Scan
+                        </a> */}
+                        <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://49.13.70.253:9898${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.8rem' }}>
                           View Scan
                         </a>
                       </td>
@@ -524,7 +528,8 @@ const SalesDashboard = () => {
               />
               {qcForm.invoiceUrl && !invoiceFile && (
                 <div style={{ fontSize: '0.78rem', marginTop: '6px' }}>
-                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
+                  {/* Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a> */}
+                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://49.13.70.253:9898${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
                 </div>
               )}
             </div>

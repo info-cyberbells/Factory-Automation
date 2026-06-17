@@ -44,7 +44,8 @@ exports.approveOrganization = async (req, res, next) => {
           html: `<h2>Congratulations ${owner.name}!</h2>
                  <p>Your workspace <b>${org.name}</b> has been approved.</p>
                  <p>You can now log in and start using the system.</p>
-                 <a href="http://localhost:3000/login">Click here to Login</a>`
+                 <!-- <a href="http://localhost:3000/login">Click here to Login</a> -->
+                 <a href="http://49.13.70.253:3008/login">Click here to Login</a>`
         });
       } catch (e) {
         console.error('Email failed:', e);

@@ -5,7 +5,8 @@ import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import { HiOutlineCheckCircle, HiOutlineCamera, HiOutlineRefresh } from 'react-icons/hi';
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || `http://49.13.70.253:9898`;
 
 const RemoteScanner = () => {
   const [searchParams] = useSearchParams();

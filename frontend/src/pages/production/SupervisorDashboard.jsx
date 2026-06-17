@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 
-const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || `http://49.13.70.253:9898`;
 
 const SupervisorDashboard = () => {
   const { user } = useAuth();
@@ -460,7 +461,7 @@ const SupervisorDashboard = () => {
                       <td>
                         {entry.invoiceUrl ? (
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <a 
+                            {/* <a 
                               href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
                               target="_blank" 
                               rel="noreferrer" 
@@ -468,9 +469,28 @@ const SupervisorDashboard = () => {
                               style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
                               View
-                            </a>
+                            </a> */}
                             <a 
+                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              View
+                            </a>
+                            {/* <a 
                               href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
+                            >
+                              Download
+                            </a> */}
+                            <a 
+                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
                               download
                               target="_blank"
                               rel="noreferrer"

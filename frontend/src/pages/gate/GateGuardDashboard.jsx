@@ -227,7 +227,7 @@ const GateGuardDashboard = () => {
                       <td>
                         {entry.invoiceUrl ? (
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <a 
+                            {/* <a 
                               href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
                               target="_blank" 
                               rel="noreferrer" 
@@ -235,9 +235,28 @@ const GateGuardDashboard = () => {
                               style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
                               View
-                            </a>
+                            </a> */}
                             <a 
+                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              View
+                            </a>
+                            {/* <a 
                               href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
+                            >
+                              Download
+                            </a> */}
+                            <a 
+                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
                               download
                               target="_blank"
                               rel="noreferrer"
