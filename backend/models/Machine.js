@@ -8,8 +8,23 @@ const MachineSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['working', 'broken', 'idle'],
+    enum: ['working', 'broken', 'idle', 'running'],
     default: 'working'
+  },
+  capacity: {
+    type: String,
+    trim: true
+  },
+  modelNumber: {
+    type: String,
+    trim: true
+  },
+  powerRating: {
+    type: String,
+    trim: true
+  },
+  lastServiceDate: {
+    type: Date
   },
   remarks: {
     type: String,

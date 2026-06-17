@@ -1,5 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`);
+  }
+});
+const upload = multer({ storage });
 const {
   getInventory,
   createInventoryItem,
@@ -62,10 +80,10 @@ router.put('/build-jobs/:id/receive', authorize('super_admin', 'admin', 'store_m
 // Quality Checker Logs (Quality Checker can CRUD, Store Manager & Sales can verify / update)
 router.route('/qc-logs')
   .get(getQualityLogs)
-  .post(authorize('super_admin', 'admin', 'quality_checker'), createQualityLog);
+  .post(authorize('super_admin', 'admin', 'quality_checker', 'store_manager', 'sales'), upload.single('invoiceFile'), createQualityLog);
 
 router.route('/qc-logs/:id')
-  .put(authorize('super_admin', 'admin', 'store_manager', 'sales', 'quality_checker'), updateQualityLog)
+  .put(authorize('super_admin', 'admin', 'store_manager', 'sales', 'quality_checker'), upload.single('invoiceFile'), updateQualityLog)
   .delete(authorize('super_admin', 'admin', 'store_manager', 'sales', 'quality_checker'), deleteQualityLog);
 
 router.put('/qc-logs/:id/verify', authorize('super_admin', 'admin', 'store_manager', 'sales'), verifyQualityLog);

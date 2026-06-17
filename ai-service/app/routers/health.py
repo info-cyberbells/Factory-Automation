@@ -7,7 +7,7 @@ router = APIRouter()
 async def health_check():
     return {
         "status": "ok",
-        "service": "str-drg-erp-ai-brain",
+        "service": "trackbells-erp-ai-brain",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0"
     }

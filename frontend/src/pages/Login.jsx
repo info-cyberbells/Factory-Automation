@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { HiOutlineMail, HiOutlineLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
+import { HiOutlineMail, HiOutlineLockClosed, HiEye, HiEyeOff, HiOutlineArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 const Login = () => {
@@ -38,12 +38,27 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page">
-      {/* Left - Branding */}
+    <div className="auth-page" style={{
+      backgroundImage: 'var(--auth-bg-gradient), url("/factory_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
+      <Link to="/" style={{
+        position: 'absolute', top: '24px', left: '24px', zIndex: 100,
+        display: 'flex', alignItems: 'center', gap: '8px',
+        color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem',
+        textDecoration: 'none', padding: '8px 16px', borderRadius: '8px',
+        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)', transition: 'var(--transition-fast)'
+      }} className="back-to-home">
+        <HiOutlineArrowLeft /> Back to Home
+      </Link>
       <div className="auth-left">
         <div className="auth-branding">
-          <div className="logo-icon">🏭</div>
-          <h1>STR-DRG ERP</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+            <img src="/logo.png" alt="TrackBells Logo" style={{ maxHeight: '110px', maxWidth: '320px', objectFit: 'contain' }} />
+          </div>
           <p>Complete factory automation from Gate Entry to Godown — production tracking, quality control, and inventory management all in one place.</p>
           <div className="tagline">Factory Automation System</div>
         </div>

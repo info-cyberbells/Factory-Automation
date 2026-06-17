@@ -27,8 +27,16 @@ const BuildJobSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'shortage_reported', 'processing', 'completed', 'received', 'declined'],
+    enum: ['pending', 'shortage_reported', 'processing', 'completed', 'received', 'declined', 'delayed'],
     default: 'pending'
+  },
+  machineId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Machine'
+  },
+  machineName: {
+    type: String,
+    trim: true
   },
   materialsUsed: [{
     materialName: { type: String, default: 'Unspecified Raw Material' },

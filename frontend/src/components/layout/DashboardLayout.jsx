@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useOrg } from '../../context/OrgContext';
 import { notificationAPI, adminOrgAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
@@ -27,12 +28,13 @@ const getMenuForRole = (role, email, permissions = []) => {
     users: { icon: <HiOutlineUsers />, label: 'User Management', path: '/users' },
     organizations: { icon: <HiOutlineOfficeBuilding />, label: 'SaaS Tenants', path: '/admin/organizations' },
     settings: { icon: <HiOutlineAdjustments />, label: 'Settings', path: '/settings' },
+    support: { icon: <HiOutlineDocumentReport />, label: 'Help & Support', path: '/admin/support' },
   };
 
   // Define what each role can see
   const roleMenus = {
     super_admin: [
-      { section: 'Enterprise', items: ['dashboard', 'users'] },
+      { section: 'Enterprise', items: ['dashboard', 'users', 'support'] },
       { section: 'Gate Log', items: ['gateGuard'] },
       { section: 'Production', items: ['supervisor'] },
       { section: 'QC Inspection', items: ['qualityChecker'] },
@@ -68,6 +70,25 @@ const getMenuForRole = (role, email, permissions = []) => {
   }));
 };
 
+const ICON_MAP = {
+  HiOutlineHome: <HiOutlineHome />,
+  HiOutlineTruck: <HiOutlineTruck />,
+  HiOutlineCog: <HiOutlineCog />,
+  HiOutlineClipboardCheck: <HiOutlineClipboardCheck />,
+  HiOutlineCube: <HiOutlineCube />,
+  HiOutlineShoppingCart: <HiOutlineShoppingCart />,
+  HiOutlineChartBar: <HiOutlineChartBar />,
+  HiOutlineLightningBolt: <HiOutlineLightningBolt />,
+  HiOutlineBell: <HiOutlineBell />,
+  HiOutlineLogout: <HiOutlineLogout />,
+  HiOutlineAdjustments: <HiOutlineAdjustments />,
+  HiOutlineUsers: <HiOutlineUsers />,
+  HiOutlineDocumentReport: <HiOutlineDocumentReport />,
+  HiOutlineUserGroup: <HiOutlineUserGroup />,
+  HiOutlineMenu: <HiOutlineMenu />,
+  HiOutlineOfficeBuilding: <HiOutlineOfficeBuilding />
+};
+
 const ROLE_LABELS = {
   super_admin: 'Platform Admin',
   admin: 'Organisation Admin',
@@ -90,6 +111,7 @@ const ROLE_COLORS = {
 
 const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   const { user, logout, isReverificationRequired, setIsReverificationRequired } = useAuth();
+  const { settings } = useOrg();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -245,7 +267,82 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const menuItems = getMenuForRole(user?.role, user?.email, user?.permissions);
+  // Dynamically compile menu items based on organization settings database config
+  const rawMenus = [...(settings?.menus || [])];
+  
+  // Always ensure dashboard menu is at the very top of the sidebar for super_admin and admin
+  if (['super_admin', 'admin'].includes(user?.role)) {
+    const dashIndex = rawMenus.findIndex(m => m.key === 'dashboard');
+    if (dashIndex > -1) {
+      const [dash] = rawMenus.splice(dashIndex, 1);
+      rawMenus.unshift(dash);
+    } else {
+      rawMenus.unshift({
+        key: 'dashboard',
+        label: 'Tracker Dashboard',
+        icon: 'HiOutlineHome',
+        path: '/dashboard',
+        visible: true,
+        roles: ['super_admin', 'admin']
+      });
+    }
+  }
+
+  // Always ensure support menu is present in the list for super_admin
+  if (user?.role === 'super_admin' && !rawMenus.some(m => m.key === 'support')) {
+    rawMenus.push({
+      key: 'support',
+      label: 'Help & Support',
+      icon: 'HiOutlineDocumentReport',
+      path: '/admin/support',
+      visible: true,
+      roles: ['super_admin']
+    });
+  }
+
+  const activeMenus = rawMenus
+    .filter(item => {
+      // 1. Must be marked visible globally
+      if (!item.visible) return false;
+      // 2. Role access check
+      if (item.roles && item.roles.length > 0) {
+        // Platform admin gets access to everything
+        if (user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com') return true;
+        return item.roles.includes(user?.role);
+      }
+      return true;
+    });
+
+  // Group menus by section dynamically
+  const menuItems = [];
+  activeMenus.forEach(item => {
+    let sectionName = item.section;
+    if (!sectionName) {
+      if (['dashboard', 'users'].includes(item.key)) sectionName = 'Enterprise';
+      else if (item.key === 'gateGuard') sectionName = 'Gate Log';
+      else if (item.key === 'supervisor') sectionName = 'Production';
+      else if (item.key === 'qualityChecker') sectionName = 'QC Inspection';
+      else if (item.key === 'storeManager') sectionName = 'Store Operations';
+      else if (item.key === 'sales') sectionName = 'Sales Log';
+      else if (['organizations', 'settings'].includes(item.key)) sectionName = 'Platform';
+      else sectionName = 'General';
+    }
+
+    let sect = menuItems.find(s => s.section === sectionName);
+    if (!sect) {
+      sect = { section: sectionName, items: [] };
+      menuItems.push(sect);
+    }
+    
+    // Resolve icon component from string name
+    const iconComponent = ICON_MAP[item.icon] || <HiOutlineHome />;
+    
+    sect.items.push({
+      ...item,
+      icon: iconComponent
+    });
+  });
+
   let roleLabel = ROLE_LABELS[user?.role] || 'User';
   if (user?.role === 'super_admin') {
     roleLabel = user.email === 'aman.cyberbells@gmail.com' ? 'Platform Admin' : 'Organisation Admin';
@@ -316,7 +413,13 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" style={{
+      backgroundImage: 'var(--auth-bg-gradient), url("/factory_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      backgroundRepeat: 'no-repeat'
+    }}>
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
@@ -324,12 +427,34 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
 
       {/* SIDEBAR */}
       <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo">🏭</div>
-          <div className="brand">
-            <h3>STR-DRG ERP</h3>
-            <span>Factory Automation</span>
-          </div>
+        <div className="sidebar-header" style={settings.logo?.includes('logo.png') ? { padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border)' } : {}}>
+          {settings.logo && settings.logo.includes('logo.png') ? (
+            <>
+              <div className="logo" style={{ background: 'none', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 0, flexShrink: 0 }}>
+                <img src="/logo_icon.png" alt="TrackBells Icon" style={{ maxHeight: '48px', maxWidth: '48px', objectFit: 'contain' }} />
+              </div>
+              <div className="brand" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>TrackBells</h3>
+                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0, lineHeight: 1.2 }}>ERP Automation</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {settings.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:')) ? (
+                <div className="logo">
+                  <img src={settings.logo} alt="Logo" style={{ maxHeight: '36px', maxWidth: '36px', borderRadius: '4px' }} />
+                </div>
+              ) : (
+                <div className="logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '1.8rem' }}>{settings.logo || '🏭'}</span>
+                </div>
+              )}
+              <div className="brand">
+                <h3>{settings.brandName || 'TrackBells ERP'}</h3>
+                <span>{settings.brandSubtitle || 'Factory Automation'}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Role Badge */}
@@ -417,9 +542,6 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             )}
             {isAdmin && (
               <>
-                <button className="navbar-icon-btn" onClick={toggleTheme} title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}>
-                  {theme === 'light' ? <HiOutlineMoon /> : <HiOutlineSun />}
-                </button>
                 <div className="notification-wrapper" ref={bellRef}>
                   <button className="navbar-icon-btn" onClick={() => setShowNotifPanel(!showNotifPanel)}>
                     <HiOutlineBell />

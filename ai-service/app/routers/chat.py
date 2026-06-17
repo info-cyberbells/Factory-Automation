@@ -24,9 +24,9 @@ async def chat_with_erp(req: ChatRequest):
         try:
             client = openai.OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a helpful customer support AI for STR-DRG Manufacturing, a drag chain factory. Keep answers short and polite."},
+                    {"role": "system", "content": "You are a helpful customer support AI for TrackBells Manufacturing, a drag chain factory. Keep answers short and polite."},
                     {"role": "user", "content": req.message}
                 ]
             )
@@ -41,6 +41,6 @@ async def chat_with_erp(req: ChatRequest):
         elif "order" in msg or "status" in msg:
             reply = "To check your order status, please navigate to the Orders tab. Most orders dispatch within 48 hours!"
         else:
-            reply = "Hello! I am the STR-DRG Assistant. (Running in Mock Mode. Please add OPENAI_API_KEY for dynamic conversations)."
+            reply = "Hello! I am the TrackBells Assistant. (Running in Mock Mode. Please add OPENAI_API_KEY for dynamic conversations)."
             
         return ChatResponse(reply=reply)

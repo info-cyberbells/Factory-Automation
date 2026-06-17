@@ -8,7 +8,8 @@ const {
   deleteUser,
   createUser,
   updateUser,
-  getAdminStats
+  getAdminStats,
+  getSuperAdminStats
 } = require('../controllers/adminController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
@@ -18,6 +19,7 @@ router.use(protect);
 
 // Stats
 router.get('/stats', authorize('super_admin', 'admin'), getAdminStats);
+router.get('/super-stats', authorize('super_admin'), getSuperAdminStats);
 
 // User CRUD
 router.route('/users')

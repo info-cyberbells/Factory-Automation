@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['super_admin', 'admin', 'store_manager', 'sales', 'supervisor', 'gate_guard', 'quality_checker'],
+    enum: ['super_admin', 'admin', 'store_manager', 'sales', 'supervisor', 'gate_guard', 'quality_checker', 'user'],
     default: 'gate_guard'
   },
   permissions: [{

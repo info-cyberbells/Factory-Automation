@@ -6,12 +6,12 @@ const Organization = require('../models/Organization');
 dotenv.config();
 
 const rolesToSeed = [
-  { role: 'admin', email: 'admin@strdrg.com', name: 'STR-DRG Admin' },
-  { role: 'store_manager', email: 'store@strdrg.com', name: 'STR-DRG Store Manager' },
-  { role: 'sales', email: 'sales@strdrg.com', name: 'STR-DRG Sales Officer' },
-  { role: 'supervisor', email: 'supervisor@strdrg.com', name: 'STR-DRG Supervisor' },
-  { role: 'gate_guard', email: 'guard@strdrg.com', name: 'STR-DRG Gate Guard' },
-  { role: 'quality_checker', email: 'quality@strdrg.com', name: 'STR-DRG Quality Checker' }
+  { role: 'admin', email: 'admin@trackbells.com', name: 'TrackBells Admin' },
+  { role: 'store_manager', email: 'store@trackbells.com', name: 'TrackBells Store Manager' },
+  { role: 'sales', email: 'sales@trackbells.com', name: 'TrackBells Sales Officer' },
+  { role: 'supervisor', email: 'supervisor@trackbells.com', name: 'TrackBells Supervisor' },
+  { role: 'gate_guard', email: 'guard@trackbells.com', name: 'TrackBells Gate Guard' },
+  { role: 'quality_checker', email: 'quality@trackbells.com', name: 'TrackBells Quality Checker' }
 ];
 
 const seed = async () => {
@@ -19,8 +19,8 @@ const seed = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('MongoDB Connected...');
 
-    // Find the default organization STR-DRG HQ
-    let org = await Organization.findOne({ name: 'STR-DRG HQ' });
+    // Find the default organization TrackBells HQ
+    let org = await Organization.findOne({ name: 'TrackBells HQ' });
     if (!org) {
       org = await Organization.findOne();
     }

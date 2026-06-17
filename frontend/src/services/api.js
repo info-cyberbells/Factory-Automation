@@ -18,6 +18,9 @@ API.interceptors.request.use(
     if (selectedOrgId) {
       config.headers['X-Organization-Id'] = selectedOrgId;
     }
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -80,6 +83,7 @@ export const adminAPI = {
   toggleStatus: (id) => API.put(`/admin/users/${id}/status`),
   deleteUser: (id) => API.delete(`/admin/users/${id}`),
   getStats: () => API.get('/admin/stats'),
+  getSuperStats: () => API.get('/admin/super-stats'),
 };
 
 // Production API calls
@@ -158,7 +162,9 @@ export const adminOrgAPI = {
   decline: (id, remark) => API.put(`/organizations/${id}/decline`, { remark }),
   forceReverify: (id) => API.post(`/organizations/${id}/force-reverify`),
   reverifyOTP: (data) => API.post('/organizations/reverify-otp', data),
-  resendReverifyOTP: () => API.post('/organizations/resend-reverify-otp')
+  resendReverifyOTP: () => API.post('/organizations/resend-reverify-otp'),
+  getSettings: (params) => API.get('/organizations/settings', { params }),
+  updateSettings: (data) => API.put('/organizations/settings', data)
 };
 
 // Operations & Unified ERP API calls
@@ -194,6 +200,13 @@ export const operationsAPI = {
   createShortageBuySale: (data) => API.post('/operations/shortage-buy-sales', data),
   updateShortageBuySale: (id, data) => API.put(`/operations/shortage-buy-sales/${id}`, data),
   deleteShortageBuySale: (id) => API.delete(`/operations/shortage-buy-sales/${id}`),
+};
+
+// Support API calls
+export const supportAPI = {
+  createTicket: (data) => API.post('/support/ticket', data),
+  getTickets: () => API.get('/support/tickets'),
+  replyTicket: (id, replyText) => API.put(`/support/tickets/${id}/reply`, { replyText }),
 };
 
 export default API;

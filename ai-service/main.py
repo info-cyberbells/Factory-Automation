@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from app.routers import health
 
 app = FastAPI(
-    title="STR-DRG ERP - AI Brain Service",
+    title="TrackBells ERP - AI Brain Service",
     description="AI-powered factory automation engine for shot calculation, shortage prediction, and analytics",
     version="1.0.0"
 )
@@ -27,7 +30,7 @@ app.include_router(chat.router)
 
 @app.get("/")
 async def root():
-    return {"message": "STR-DRG ERP AI Brain Service", "status": "running"}
+    return {"message": "TrackBells ERP AI Brain Service", "status": "running"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

@@ -7,12 +7,18 @@ const {
   forceReverify,
   reverifyOTP,
   resendReverifyOTP,
-  createOrganization
+  createOrganization,
+  getOrgSettings,
+  updateOrgSettings
 } = require('../controllers/orgController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 
 router.use(protect);
+
+// Settings Routes
+router.get('/settings', getOrgSettings);
+router.put('/settings', authorize('super_admin', 'admin'), updateOrgSettings);
 
 // Organization management (only for Main Super Admin)
 router.get('/', authorize('super_admin'), getAllOrganizations);

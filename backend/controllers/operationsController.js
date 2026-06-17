@@ -123,7 +123,21 @@ exports.deleteMachine = async (req, res, next) => {
 
 exports.getBuildJobs = async (req, res, next) => {
   try {
-    const jobs = await BuildJob.find().populate('orderedBy', 'name role').sort({ createdAt: -1 });
+    // Dynamically mark past estimatedDate jobs as delayed if they are still processing
+    await BuildJob.updateMany(
+      {
+        status: 'processing',
+        estimatedDate: { $lt: new Date() }
+      },
+      {
+        status: 'delayed'
+      }
+    );
+
+    const jobs = await BuildJob.find()
+      .populate('orderedBy', 'name role')
+      .populate('machineId')
+      .sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: jobs });
   } catch (error) {
     next(error);
@@ -157,9 +171,57 @@ exports.createBuildJob = async (req, res, next) => {
 
 exports.updateBuildJob = async (req, res, next) => {
   try {
+    const Machine = require('../models/Machine');
+    const existingJob = await BuildJob.findById(req.params.id);
+    if (!existingJob) return res.status(404).json({ success: false, message: 'Build Job not found' });
+
+    // Handle machine allocation transitions
+    if (req.body.status) {
+      const newStatus = req.body.status;
+      const oldStatus = existingJob.status;
+      const newMachineId = req.body.machineId;
+      const oldMachineId = existingJob.machineId;
+
+      const isNewRunning = ['processing', 'delayed'].includes(newStatus);
+
+      if (isNewRunning) {
+        if (newMachineId) {
+          if (oldMachineId && oldMachineId.toString() !== newMachineId.toString()) {
+            await Machine.findByIdAndUpdate(oldMachineId, { status: 'working' });
+          }
+          await Machine.findByIdAndUpdate(newMachineId, { status: 'running' });
+        } else if (oldMachineId) {
+          await Machine.findByIdAndUpdate(oldMachineId, { status: 'running' });
+        }
+      } else {
+        const machineToRelease = newMachineId || oldMachineId;
+        if (machineToRelease) {
+          await Machine.findByIdAndUpdate(machineToRelease, { status: 'working' });
+        }
+        if (newStatus === 'completed') {
+          req.body.completedAt = Date.now();
+        }
+      }
+    } else if (req.body.machineId) {
+      const currentStatus = existingJob.status;
+      const isRunning = ['processing', 'delayed'].includes(currentStatus);
+      const oldMachineId = existingJob.machineId;
+      const newMachineId = req.body.machineId;
+
+      if (oldMachineId && oldMachineId.toString() !== newMachineId.toString()) {
+        await Machine.findByIdAndUpdate(oldMachineId, { status: 'working' });
+      }
+
+      if (isRunning) {
+        await Machine.findByIdAndUpdate(newMachineId, { status: 'running' });
+      } else {
+        await Machine.findByIdAndUpdate(newMachineId, { status: 'working' });
+      }
+    }
+
     const job = await BuildJob.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
-      .populate('orderedBy', 'name role');
-    if (!job) return res.status(404).json({ success: false, message: 'Build Job not found' });
+      .populate('orderedBy', 'name role')
+      .populate('machineId');
 
     if (req.body.status === 'shortage_reported') {
       await createInternalNotification(
@@ -170,7 +232,24 @@ exports.updateBuildJob = async (req, res, next) => {
       );
     }
 
+    if (req.body.status === 'completed') {
+      await createInternalNotification(
+        'Product Built & Dispatched',
+        `Supervisor completed build of Product: ${job.productName} and sent to Godown.`,
+        'system',
+        req.user.organizationId
+      );
+      // Emit specialized handshake socket event to Store Manager
+      broadcastToOrg(req, 'product_sent_to_store', {
+        jobId: job._id,
+        productName: job.productName,
+        productSize: job.productSize || 'Standard',
+        quantity: job.orderQuantity
+      });
+    }
+
     broadcastToOrg(req, 'build_updated', { action: 'update', job });
+    broadcastToOrg(req, 'machine_updated', { action: 'update' });
     res.status(200).json({ success: true, data: job });
   } catch (error) {
     next(error);
@@ -179,12 +258,17 @@ exports.updateBuildJob = async (req, res, next) => {
 
 exports.sendToStore = async (req, res, next) => {
   try {
-    const job = await BuildJob.findById(req.params.id).populate('orderedBy', 'name role');
+    const job = await BuildJob.findById(req.params.id).populate('orderedBy', 'name role').populate('machineId');
     if (!job) return res.status(404).json({ success: false, message: 'Build Job not found' });
 
     job.status = 'completed';
     job.completedAt = Date.now();
     await job.save();
+
+    if (job.machineId) {
+      const Machine = require('../models/Machine');
+      await Machine.findByIdAndUpdate(job.machineId, { status: 'working' });
+    }
 
     await createInternalNotification(
       'Product Built & Dispatched',
@@ -202,6 +286,7 @@ exports.sendToStore = async (req, res, next) => {
     });
 
     broadcastToOrg(req, 'build_updated', { action: 'update', job });
+    broadcastToOrg(req, 'machine_updated', { action: 'update' });
 
     res.status(200).json({ success: true, message: 'Product dispatched to godown', data: job });
   } catch (error) {
@@ -285,7 +370,11 @@ exports.getQualityLogs = async (req, res, next) => {
 
 exports.createQualityLog = async (req, res, next) => {
   try {
-    const log = await QualityLog.create(req.body);
+    const logData = { ...req.body };
+    if (req.file) {
+      logData.invoiceUrl = `/uploads/${req.file.filename}`;
+    }
+    const log = await QualityLog.create(logData);
 
     await createInternalNotification(
       'QC/Invoice Document Uploaded',
@@ -354,7 +443,11 @@ exports.verifyQualityLog = async (req, res, next) => {
 
 exports.updateQualityLog = async (req, res, next) => {
   try {
-    const log = await QualityLog.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const logData = { ...req.body };
+    if (req.file) {
+      logData.invoiceUrl = `/uploads/${req.file.filename}`;
+    }
+    const log = await QualityLog.findByIdAndUpdate(req.params.id, logData, { new: true, runValidators: true });
     if (!log) return res.status(404).json({ success: false, message: 'Log not found' });
     broadcastToOrg(req, 'quality_updated', { action: 'update', log });
     res.status(200).json({ success: true, data: log });

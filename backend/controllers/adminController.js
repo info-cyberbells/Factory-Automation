@@ -1,4 +1,10 @@
 const User = require('../models/User');
+const SupportTicket = require('../models/SupportTicket');
+const GateEntry = require('../models/GateEntry');
+const BuildJob = require('../models/BuildJob');
+const QualityLog = require('../models/QualityLog');
+const InventoryItem = require('../models/InventoryItem');
+const ShortageBuySale = require('../models/ShortageBuySale');
 
 // @desc    Get all users (with search, filter, pagination)
 // @route   GET /api/admin/users
@@ -22,7 +28,13 @@ exports.getAllUsers = async (req, res, next) => {
         { phone: { $regex: search, $options: 'i' } }
       ];
     }
-    if (role) filter.role = role;
+    if (role) {
+      if (role.includes(',')) {
+        filter.role = { $in: role.split(',') };
+      } else {
+        filter.role = role;
+      }
+    }
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
     const total = await User.countDocuments(filter);
@@ -61,7 +73,7 @@ exports.getUser = async (req, res, next) => {
 exports.updateUserRole = async (req, res, next) => {
   try {
     const { role, permissions } = req.body;
-    const validRoles = ['super_admin', 'admin', 'store_manager', 'sales', 'supervisor', 'gate_guard', 'quality_checker'];
+    const validRoles = ['super_admin', 'admin', 'store_manager', 'sales', 'supervisor', 'gate_guard', 'quality_checker', 'user'];
 
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: `Invalid role. Valid: ${validRoles.join(', ')}` });
@@ -141,21 +153,50 @@ exports.deleteUser = async (req, res, next) => {
 // @access  Private/Admin
 exports.createUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, phone, department, permissions } = req.body;
+    const { name, email, password, role, phone, department, permissions, orgName, orgIndustry, orgAddress } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
+    let organizationId = req.user.organizationId;
+    let isOrgOwner = false;
+    let userRole = role || 'user';
+
+    // If orgName is provided and role is admin, create a new Organization and set role to super_admin
+    if (orgName && role === 'admin') {
+      const Organization = require('../models/Organization');
+      
+      const orgExists = await Organization.findOne({ name: orgName });
+      if (orgExists) {
+        return res.status(400).json({ success: false, message: 'Organization name already exists' });
+      }
+
+      const newOrg = await Organization.create({
+        name: orgName,
+        industry: orgIndustry || 'Manufacturing',
+        address: orgAddress || '',
+        contactEmail: email,
+        contactPhone: phone || '',
+        verified: true,       // Bypasses OTP verification
+        status: 'approved'     // Bypasses Superadmin approval
+      });
+
+      organizationId = newOrg._id;
+      isOrgOwner = true;
+      userRole = 'super_admin'; // Forces the role to 'super_admin' (Org Admin) for the new organization
+    }
+
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'user',
+      role: userRole,
       phone,
       department,
-      organizationId: req.user.organizationId,
+      organizationId,
+      isOrgOwner,
       permissions: permissions || []
     });
 
@@ -222,6 +263,59 @@ exports.getAdminStats = async (req, res, next) => {
         activeUsers,
         inactiveUsers: totalUsers - activeUsers,
         roleDistribution
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get global stats for super admin dashboard
+// @route   GET /api/admin/super-stats
+// @access  Private (super_admin only)
+exports.getSuperAdminStats = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Super admin only.' });
+    }
+
+    const [
+      totalAdmins,
+      totalUsers,
+      totalTickets,
+      totalGateEntries,
+      totalBuildJobs,
+      totalQcLogs,
+      totalInventoryItems,
+      totalShortages,
+      recentTickets,
+      recentBuilds
+    ] = await Promise.all([
+      User.countDocuments({ role: { $in: ['admin', 'super_admin'] } }),
+      User.countDocuments(),
+      SupportTicket.countDocuments(),
+      GateEntry.countDocuments(),
+      BuildJob.countDocuments(),
+      QualityLog.countDocuments(),
+      InventoryItem.countDocuments(),
+      ShortageBuySale.countDocuments({ type: 'shortage' }),
+      SupportTicket.find().sort({ createdAt: -1 }).limit(5),
+      BuildJob.find().sort({ createdAt: -1 }).limit(5).populate('machineId', 'name')
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalAdmins,
+        totalUsers,
+        totalTickets,
+        totalGateEntries,
+        totalBuildJobs,
+        totalQcLogs,
+        totalInventoryItems,
+        totalShortages,
+        recentTickets,
+        recentBuilds
       }
     });
   } catch (error) {

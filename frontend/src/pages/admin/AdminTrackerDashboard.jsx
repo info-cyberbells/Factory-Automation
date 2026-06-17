@@ -173,21 +173,32 @@ const AdminTrackerDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {buildJobs.map(job => (
+                     {buildJobs.map(job => (
                       <tr key={job._id}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{job.productName}</td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{job.productName}</div>
+                          {job.machineId && typeof job.machineId === 'object' ? (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineId.name} {job.machineId.capacity ? `(${job.machineId.capacity})` : ''}</div>
+                          ) : job.machineName ? (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineName}</div>
+                          ) : null}
+                          {job.materialsUsed && job.materialsUsed.length > 0 && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>📦 {job.materialsUsed.map(m => `${m.quantity} ${m.unit} ${m.materialName}`).join(', ')}</div>
+                          )}
+                        </td>
                         <td style={{ fontWeight: 700 }}>{job.orderQuantity} pcs</td>
                         <td>
                           <span className={`azure-badge ${
                             job.status === 'pending' ? 'warning' :
                             job.status === 'shortage_reported' ? 'danger' :
-                            job.status === 'processing' ? 'running' : 'success'
+                            job.status === 'processing' ? 'running' :
+                            job.status === 'delayed' ? 'danger' : 'success'
                           }`}>
-                            {job.status.replace('_', ' ')}
+                            {job.status === 'delayed' ? '⚠️ delayed' : job.status.replace('_', ' ')}
                           </span>
                         </td>
                         <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          {job.estimatedDate ? new Date(job.estimatedDate).toLocaleDateString() : 'Scheduling...'}
+                          {job.estimatedDate ? new Date(job.estimatedDate).toLocaleString() : 'Scheduling...'}
                         </td>
                       </tr>
                     ))}
@@ -256,8 +267,11 @@ const AdminTrackerDashboard = () => {
                       <tr key={m._id}>
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.name}</td>
                         <td>
-                          <span className={`azure-badge ${m.status === 'working' ? 'success' : m.status === 'idle' ? 'warning' : 'danger'}`}>
-                            {m.status}
+                          <span className={`azure-badge ${
+                            m.status === 'working' ? 'success' :
+                            m.status === 'running' || m.status === 'idle' ? 'warning' : 'danger'
+                          }`}>
+                            {m.status === 'running' ? 'in progress' : m.status === 'broken' ? 'damaged' : m.status}
                           </span>
                         </td>
                       </tr>
@@ -274,18 +288,51 @@ const AdminTrackerDashboard = () => {
                 <table className="azure-table">
                   <thead>
                     <tr>
-                      <th>Bill Number</th>
+                      <th>Bill Info</th>
                       <th>Vendor Sourcing</th>
                       <th>Inward Qty</th>
+                      <th>Invoice Document</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {gateLogs.map(entry => (
                       <tr key={entry._id}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{entry.billNumber}</td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{entry.billNumber}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', whiteSpace: 'nowrap' }}>
+                            ⏱️ {new Date(entry.createdAt).toLocaleString()}
+                          </div>
+                        </td>
                         <td>{entry.vendorName}</td>
                         <td style={{ color: 'var(--primary-light)', fontWeight: 600 }}>{entry.quantity} {entry.unit}</td>
+                        <td>
+                          {entry.invoiceUrl ? (
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <a 
+                                href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                View
+                              </a>
+                              <a 
+                                href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                                download
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
+                              >
+                                Download
+                              </a>
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No Invoice</span>
+                          )}
+                        </td>
                         <td>
                           <span className={`azure-badge ${
                             entry.status === 'pending' ? 'warning' : 'success'

@@ -12,11 +12,11 @@ import toast from 'react-hot-toast';
 const ROLES = [
   { value: 'super_admin', label: 'Super Admin', color: '#ef4444', emoji: '👑' },
   { value: 'admin', label: 'Admin', color: '#f97316', emoji: '🛡️' },
-  { value: 'guard', label: 'Security Guard', color: '#06b6d4', emoji: '💂' },
+  { value: 'gate_guard', label: 'Security Guard', color: '#06b6d4', emoji: '💂' },
   { value: 'supervisor', label: 'Supervisor', color: '#a855f7', emoji: '👷' },
   { value: 'store_manager', label: 'Store Manager', color: '#22c55e', emoji: '📦' },
   { value: 'sales', label: 'Sales', color: '#3b82f6', emoji: '🛒' },
-  { value: 'production', label: 'Production', color: '#8b5cf6', emoji: '🏭' },
+  { value: 'quality_checker', label: 'Quality Checker', color: '#8b5cf6', emoji: '📋' },
   { value: 'user', label: 'User (Custom)', color: '#94a3b8', emoji: '👤' },
 ];
 
@@ -33,7 +33,8 @@ const PERMISSIONS = [
 ];
 
 const emptyForm = {
-  name: '', email: '', password: '', phone: '', department: '', role: 'user', permissions: []
+  name: '', email: '', password: '', phone: '', department: '', role: 'user', permissions: [],
+  orgName: '', orgIndustry: 'Manufacturing', orgAddress: ''
 };
 
 const UserManagement = () => {
@@ -195,32 +196,47 @@ const UserManagement = () => {
       </div>
 
       {/* Role Distribution */}
-      {stats?.roleDistribution && (
-        <div style={{
-          display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'
-        }}>
-          {stats.roleDistribution.map((rd, i) => {
-            let info = getRoleInfo(rd._id);
-            if (rd._id === 'super_admin') {
-              info = { ...info, label: 'Admins', emoji: '🏢', color: '#f97316' };
-            }
-            return (
-              <div key={i} style={{
-                padding: '8px 16px', borderRadius: '10px',
-                background: `${info.color}10`, border: `1px solid ${info.color}25`,
-                display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'
-              }} onClick={() => { setFilterRole(rd._id); setPagination(p => ({ ...p, page: 1 })); }}>
-                <span>{info.emoji}</span>
-                <span style={{ fontSize: '0.8rem', color: info.color, fontWeight: 600 }}>{info.label}</span>
-                <span style={{
-                  padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem',
-                  background: `${info.color}20`, color: info.color, fontWeight: 700
-                }}>{rd.count}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {stats?.roleDistribution && (() => {
+        const processedDistribution = [];
+        let adminSum = 0;
+        stats.roleDistribution.forEach(rd => {
+          if (rd._id === 'super_admin' || rd._id === 'admin') {
+            adminSum += rd.count;
+          } else {
+            processedDistribution.push(rd);
+          }
+        });
+        if (adminSum > 0) {
+          // Find the index to place it, let's keep Admins first by unshifting it
+          processedDistribution.unshift({ _id: 'super_admin,admin', count: adminSum });
+        }
+        return (
+          <div style={{
+            display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'
+          }}>
+            {processedDistribution.map((rd, i) => {
+              let info = getRoleInfo(rd._id);
+              if (rd._id === 'super_admin,admin') {
+                info = { value: 'super_admin,admin', label: 'Admins', emoji: '🏢', color: '#f97316' };
+              }
+              return (
+                <div key={i} style={{
+                  padding: '8px 16px', borderRadius: '10px',
+                  background: `${info.color}10`, border: `1px solid ${info.color}25`,
+                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'
+                }} onClick={() => { setFilterRole(rd._id); setPagination(p => ({ ...p, page: 1 })); }}>
+                  <span>{info.emoji}</span>
+                  <span style={{ fontSize: '0.8rem', color: info.color, fontWeight: 600 }}>{info.label}</span>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: '6px', fontSize: '0.7rem',
+                    background: `${info.color}20`, color: info.color, fontWeight: 700
+                  }}>{rd.count}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -238,7 +254,10 @@ const UserManagement = () => {
           onChange={(e) => { setFilterRole(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
           style={{ width: '180px', height: '42px', fontSize: '0.85rem', cursor: 'pointer' }}>
           <option value="">All Roles</option>
-          {ROLES.map(r => <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>)}
+          <option value="super_admin,admin">🏢 Admins</option>
+          {ROLES.filter(r => r.value !== 'super_admin' && r.value !== 'admin').map(r => (
+            <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
+          ))}
         </select>
         <button className="btn btn-secondary btn-sm" onClick={() => { setSearch(''); setFilterRole(''); }}
           style={{ height: '42px' }}>
@@ -434,6 +453,44 @@ const UserManagement = () => {
                 </div>
               </div>
 
+              {formData.role === 'admin' && (
+                <div style={{
+                  marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',
+                  padding: '16px', background: 'rgba(249,115,22,0.04)', borderRadius: '12px',
+                  border: '1px solid rgba(249,115,22,0.12)'
+                }}>
+                  <h4 style={{ gridColumn: '1 / -1', margin: '0 0 4px 0', fontSize: '0.9rem', color: '#f97316', fontWeight: 600 }}>
+                    🏢 Organization Details
+                  </h4>
+                  <p style={{ gridColumn: '1 / -1', margin: '0 0 8px 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Fill these to create a new organization/workspace. Leave blank to add to your current organization.
+                  </p>
+                  <div className="form-group" style={{ margin: 0, gridColumn: '1 / -1' }}>
+                    <label className="form-label">Organization Name</label>
+                    <input className="form-input" placeholder="Enter organization name" value={formData.orgName}
+                      onChange={(e) => setFormData({ ...formData, orgName: e.target.value })} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Industry</label>
+                    <select className="form-input" value={formData.orgIndustry}
+                      onChange={(e) => setFormData({ ...formData, orgIndustry: e.target.value })}
+                      style={{ cursor: 'pointer' }}>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Logistics">Logistics</option>
+                      <option value="Automotive">Automotive</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Textiles">Textiles</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Address</label>
+                    <input className="form-input" placeholder="Organization address" value={formData.orgAddress}
+                      onChange={(e) => setFormData({ ...formData, orgAddress: e.target.value })} />
+                  </div>
+                </div>
+              )}
+
               {formData.role === 'user' && (
                 <div style={{ marginTop: '16px' }}>
                   <label className="form-label">Permissions (Select Modules)</label>
@@ -456,14 +513,13 @@ const UserManagement = () => {
                 </div>
               )}
 
-              {/* Role description */}
               <div style={{
                 marginTop: '16px', padding: '12px 16px', borderRadius: '10px',
                 background: formData.role === 'admin' ? 'rgba(249,115,22,0.08)' : 'rgba(59,130,246,0.08)',
                 border: formData.role === 'admin' ? '1px solid rgba(249,115,22,0.2)' : '1px solid rgba(59,130,246,0.2)'
               }}>
                 <span style={{ fontSize: '0.8rem', color: formData.role === 'admin' ? '#f97316' : '#3b82f6', fontWeight: 500 }}>
-                  {formData.role === 'admin' ? '🛡️ Admin — will have full access to all modules.' : '👤 User — will only access the checked modules above.'}
+                  {formData.role === 'admin' ? '🛡️ Admin — will have full access to all modules. Fill Organization Details to make this user an Org Admin (Super Admin).' : '👤 User — will only access the checked modules above.'}
                 </span>
               </div>
 

@@ -19,9 +19,9 @@ const seedSuperAdmin = async () => {
 
     // Create Default Organization
     const defaultOrg = await Organization.create({
-      name: 'STR-DRG HQ',
+      name: 'TrackBells HQ',
       industry: 'Manufacturing',
-      contactEmail: 'admin@strdrg.com',
+      contactEmail: 'admin@trackbells.com',
       verified: true,
       status: 'approved'
     });

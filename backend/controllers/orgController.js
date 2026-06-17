@@ -40,7 +40,7 @@ exports.approveOrganization = async (req, res, next) => {
       try {
         await sendEmail({
           to: owner.email,
-          subject: 'Welcome to STR-DRG ERP - Workspace Approved!',
+          subject: 'Welcome to TrackBells ERP - Workspace Approved!',
           html: `<h2>Congratulations ${owner.name}!</h2>
                  <p>Your workspace <b>${org.name}</b> has been approved.</p>
                  <p>You can now log in and start using the system.</p>
@@ -79,7 +79,7 @@ exports.declineOrganization = async (req, res, next) => {
       try {
         await sendEmail({
           to: owner.email,
-          subject: 'STR-DRG ERP - Workspace Application Declined',
+          subject: 'TrackBells ERP - Workspace Application Declined',
           html: `<h2>Application Declined</h2>
                  <p>Unfortunately, your application for workspace <b>${org.name}</b> was declined.</p>
                  <p><b>Reason:</b> ${remark}</p>`
@@ -259,6 +259,111 @@ exports.resendReverifyOTP = async (req, res, next) => {
     }
 
     res.status(200).json({ success: true, message: 'A new OTP has been sent to your email' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const defaultSettings = {
+  brandName: 'TrackBells ERP',
+  brandSubtitle: 'Factory Automation',
+  logo: '/logo.png',
+  themeColor: '#f97316',
+  footerText: 'Powered by Cyberbells ITES services pvt ltd',
+  menus: [
+    { key: 'gateGuard', label: 'Gate Operations', icon: 'HiOutlineTruck', path: '/gate-guard', visible: true, roles: ['super_admin', 'gate_guard'] },
+    { key: 'supervisor', label: 'Production Line', icon: 'HiOutlineCog', path: '/supervisor', visible: true, roles: ['super_admin', 'supervisor'] },
+    { key: 'qualityChecker', label: 'Quality Control', icon: 'HiOutlineClipboardCheck', path: '/quality', visible: true, roles: ['super_admin', 'quality_checker'] },
+    { key: 'storeManager', label: 'Store & Godown', icon: 'HiOutlineCube', path: '/store', visible: true, roles: ['super_admin', 'store_manager'] },
+    { key: 'sales', label: 'Sales & Orders', icon: 'HiOutlineShoppingCart', path: '/sales', visible: true, roles: ['super_admin', 'sales'] },
+    { key: 'users', label: 'User Management', icon: 'HiOutlineUsers', path: '/users', visible: true, roles: ['super_admin', 'admin'] },
+    { key: 'organizations', label: 'SaaS Tenants', icon: 'HiOutlineOfficeBuilding', path: '/admin/organizations', visible: true, roles: ['super_admin'] },
+    { key: 'settings', label: 'Settings', icon: 'HiOutlineAdjustments', path: '/settings', visible: true, roles: ['super_admin', 'admin'] }
+  ]
+};
+
+// @desc    Get organization settings
+// @route   GET /api/organizations/settings
+// @access  Private
+exports.getOrgSettings = async (req, res, next) => {
+  try {
+    let orgId = req.user.organizationId;
+    
+    // For Platform Super Admin who may not have organizationId
+    if (!orgId && req.user.role === 'super_admin') {
+      orgId = req.query.orgId || req.headers['x-org-id'];
+      if (!orgId) {
+        const firstOrg = await Organization.findOne();
+        if (firstOrg) {
+          orgId = firstOrg._id;
+        }
+      }
+    }
+    
+    if (!orgId) {
+      return res.status(200).json({ success: true, data: defaultSettings });
+    }
+    
+    const org = await Organization.findById(orgId);
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+    
+    let settings = org.settings || {};
+    let needsSave = false;
+    
+    if (!settings.brandName) { settings.brandName = defaultSettings.brandName; needsSave = true; }
+    if (!settings.brandSubtitle) { settings.brandSubtitle = defaultSettings.brandSubtitle; needsSave = true; }
+    if (!settings.logo) { settings.logo = defaultSettings.logo; needsSave = true; }
+    if (!settings.themeColor) { settings.themeColor = defaultSettings.themeColor; needsSave = true; }
+    if (!settings.footerText) { settings.footerText = defaultSettings.footerText; needsSave = true; }
+    if (!settings.menus || settings.menus.length === 0) { settings.menus = defaultSettings.menus; needsSave = true; }
+    
+    if (needsSave) {
+      org.settings = settings;
+      await org.save();
+    }
+    
+    res.status(200).json({ success: true, data: org.settings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update organization settings
+// @route   PUT /api/organizations/settings
+// @access  Private (Org Admin / Platform Admin)
+exports.updateOrgSettings = async (req, res, next) => {
+  try {
+    let orgId = req.user.organizationId;
+    
+    if (!orgId && req.user.role === 'super_admin') {
+      orgId = req.body.orgId || req.query.orgId || req.headers['x-org-id'];
+    }
+    
+    if (!orgId) {
+      return res.status(400).json({ success: false, message: 'Organization ID is required' });
+    }
+    
+    const org = await Organization.findById(orgId);
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+    
+    const { brandName, brandSubtitle, logo, themeColor, footerText, menus } = req.body;
+    
+    org.settings = {
+      brandName: brandName || (org.settings && org.settings.brandName) || defaultSettings.brandName,
+      brandSubtitle: brandSubtitle || (org.settings && org.settings.brandSubtitle) || defaultSettings.brandSubtitle,
+      logo: logo || (org.settings && org.settings.logo) || defaultSettings.logo,
+      themeColor: themeColor || (org.settings && org.settings.themeColor) || defaultSettings.themeColor,
+      footerText: footerText || (org.settings && org.settings.footerText) || defaultSettings.footerText,
+      menus: menus || (org.settings && org.settings.menus) || defaultSettings.menus
+    };
+    
+    await org.save();
+    
+    res.status(200).json({ success: true, data: org.settings });
   } catch (error) {
     next(error);
   }

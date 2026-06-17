@@ -198,10 +198,11 @@ const GateGuardDashboard = () => {
               <table className="azure-table">
                 <thead>
                   <tr>
-                    <th>Bill Info</th>
+                    <th>Bill Number</th>
                     <th>Vendor</th>
                     <th>Material</th>
                     <th>Vehicle</th>
+                    <th>Invoice Document</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -209,25 +210,8 @@ const GateGuardDashboard = () => {
                   {entries.map(entry => (
                     <tr key={entry._id}>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{entry.billNumber}</div>
-                          {entry.invoiceUrl && (
-                            <a 
-                              href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              style={{ 
-                                fontSize: '0.75rem', 
-                                color: 'var(--primary)', 
-                                textDecoration: 'underline', 
-                                fontWeight: 500 
-                              }}
-                            >
-                              View Bill
-                            </a>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '2px' }}>{new Date(entry.createdAt).toLocaleTimeString()}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{entry.billNumber}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px' }}>⏱️ {new Date(entry.createdAt).toLocaleString()}</div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 500 }}>{entry.vendorName}</div>
@@ -239,6 +223,33 @@ const GateGuardDashboard = () => {
                       <td style={{ fontSize: '0.85rem' }}>
                         <div>{entry.vehicleNumber || 'N/A'}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{entry.driverName || ''}</div>
+                      </td>
+                      <td>
+                        {entry.invoiceUrl ? (
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <a 
+                              href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              View
+                            </a>
+                            <a 
+                              href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
+                            >
+                              Download
+                            </a>
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No Invoice</span>
+                        )}
                       </td>
                       <td>
                         <span className={`azure-badge ${

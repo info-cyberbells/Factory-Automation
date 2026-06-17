@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
-import { HiOutlineMail, HiOutlineLockClosed, HiOutlineUser, HiOutlinePhone, HiEye, HiEyeOff, HiOutlineOfficeBuilding, HiOutlineLocationMarker, HiOutlineBriefcase, HiOutlineKey } from 'react-icons/hi';
+import { HiOutlineMail, HiOutlineLockClosed, HiOutlineUser, HiOutlinePhone, HiEye, HiEyeOff, HiOutlineOfficeBuilding, HiOutlineLocationMarker, HiOutlineBriefcase, HiOutlineKey, HiOutlineArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 const Signup = () => {
@@ -93,21 +93,36 @@ const Signup = () => {
   };
 
   return (
-    <div className="auth-page">
-      {/* Left - Branding */}
+    <div className="auth-page" style={{
+      backgroundImage: 'var(--auth-bg-gradient), url("/factory_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
+      <Link to="/" style={{
+        position: 'absolute', top: '24px', left: '24px', zIndex: 100,
+        display: 'flex', alignItems: 'center', gap: '8px',
+        color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.9rem',
+        textDecoration: 'none', padding: '8px 16px', borderRadius: '8px',
+        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)', transition: 'var(--transition-fast)'
+      }} className="back-to-home">
+        <HiOutlineArrowLeft /> Back to Home
+      </Link>
       <div className="auth-left">
         <div className="auth-branding">
-          <div className="logo-icon">🏭</div>
-          <h1>STR-DRG SaaS</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+            <img src="/logo.png" alt="TrackBells Logo" style={{ maxHeight: '110px', maxWidth: '320px', objectFit: 'contain' }} />
+          </div>
           <p>Join the digital transformation. Start your own cloud workspace to automate production tracking, quality control, and inventory.</p>
           <div className="tagline">Next-Gen Factory Platform</div>
           
           <div style={{ marginTop: '40px', display: 'flex', gap: '8px' }}>
-            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 1 ? '#3b82f6' : 'rgba(255,255,255,0.1)' }} />
-            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 2 ? '#3b82f6' : 'rgba(255,255,255,0.1)' }} />
-            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 3 ? '#3b82f6' : 'rgba(255,255,255,0.1)' }} />
+            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 1 ? 'var(--primary)' : 'var(--border)' }} />
+            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 2 ? 'var(--primary)' : 'var(--border)' }} />
+            <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: step >= 3 ? 'var(--primary)' : 'var(--border)' }} />
           </div>
-          <p style={{ marginTop: '12px', color: '#8892b0', fontSize: '0.9rem' }}>
+          <p style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
             Step {step} of 3: {step === 1 ? 'Admin Profile' : step === 2 ? 'Organization Details' : 'Verify Email'}
           </p>
         </div>

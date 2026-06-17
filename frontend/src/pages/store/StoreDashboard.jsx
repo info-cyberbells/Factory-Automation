@@ -36,6 +36,7 @@ const StoreDashboard = () => {
   const [showQcModal, setShowQcModal] = useState(false);
   const [editingQcId, setEditingQcId] = useState(null);
   const [qcForm, setQcForm] = useState({ materialName: '', quantity: 0, unit: 'pcs', remarks: '', qcType: 'inspected', invoiceNumber: '', invoiceUrl: '' });
+  const [invoiceFile, setInvoiceFile] = useState(null);
 
   // Shortage/Buy/Sale Modal
   const [showSbsModal, setShowSbsModal] = useState(false);
@@ -140,15 +141,30 @@ const StoreDashboard = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append('materialName', qcForm.materialName);
+      formData.append('quantity', qcForm.quantity);
+      formData.append('unit', qcForm.unit);
+      formData.append('remarks', qcForm.remarks);
+      formData.append('qcType', qcForm.qcType);
+      formData.append('invoiceNumber', qcForm.invoiceNumber);
+
+      if (invoiceFile) {
+        formData.append('invoiceFile', invoiceFile);
+      } else {
+        formData.append('invoiceUrl', qcForm.invoiceUrl);
+      }
+
       if (editingQcId) {
-        await operationsAPI.updateQualityLog(editingQcId, qcForm);
+        await operationsAPI.updateQualityLog(editingQcId, formData);
         toast.success('Quality inspection log updated');
       } else {
-        await operationsAPI.createQualityLog(qcForm);
+        await operationsAPI.createQualityLog(formData);
         toast.success('Quality inspection log created');
       }
       setShowQcModal(false);
       setQcForm({ materialName: '', quantity: 0, unit: 'pcs', remarks: '', qcType: 'inspected', invoiceNumber: '', invoiceUrl: '' });
+      setInvoiceFile(null);
       setEditingQcId(null);
       fetchData();
     } catch (err) {
@@ -168,6 +184,7 @@ const StoreDashboard = () => {
       invoiceNumber: log.invoiceNumber || '',
       invoiceUrl: log.invoiceUrl || ''
     });
+    setInvoiceFile(null);
     setEditingQcId(log._id);
     setShowQcModal(true);
   };
@@ -473,7 +490,7 @@ const StoreDashboard = () => {
                         <div>
                           <span style={{ fontWeight: 600 }}>{log.invoiceNumber}</span>
                           <br />
-                          <a href={log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.78rem' }}>View Scan</a>
+                          <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.78rem' }}>View Scan</a>
                         </div>
                       ) : 'No invoice'}
                     </td>
@@ -685,8 +702,19 @@ const StoreDashboard = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Invoice scan URL link</label>
-              <input type="text" className="form-input" value={qcForm.invoiceUrl} onChange={e => setQcForm({ ...qcForm, invoiceUrl: e.target.value })} placeholder="Simulated scan link..." />
+              <label className="form-label">Upload Invoice Document</label>
+              <input 
+                type="file" 
+                className="form-input" 
+                onChange={e => setInvoiceFile(e.target.files[0])} 
+                accept="image/*,application/pdf"
+                style={{ padding: '8px 12px' }}
+              />
+              {qcForm.invoiceUrl && !invoiceFile && (
+                <div style={{ fontSize: '0.78rem', marginTop: '6px' }}>
+                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
+                </div>
+              )}
             </div>
 
             <div className="form-group">

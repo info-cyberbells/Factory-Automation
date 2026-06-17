@@ -75,10 +75,11 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/organizations', require('./routes/orgRoutes'));
 app.use('/api/operations', require('./routes/operationsRoutes'));
+app.use('/api/support', require('./routes/supportRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'str-drg-erp-backend', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'trackbells-erp-backend', timestamp: new Date().toISOString() });
 });
 
 // 404 handler

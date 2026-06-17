@@ -156,8 +156,8 @@ exports.sendOrgOTP = async (req, res, next) => {
     try {
       await sendEmail({
         to: email,
-        subject: 'Your STR-DRG Organization Verification Code',
-        html: `<h2>Welcome to STR-DRG ERP</h2>
+        subject: 'Your TrackBells Organization Verification Code',
+        html: `<h2>Welcome to TrackBells ERP</h2>
                <p>Your Organization Verification Code is:</p>
                <h1 style="color: #3b82f6; font-size: 40px; letter-spacing: 5px;">${otpCode}</h1>
                <p>This code will expire in 10 minutes.</p>`
@@ -225,7 +225,7 @@ exports.verifyAndCreateOrg = async (req, res, next) => {
                <p><b>Admin Name:</b> ${user.name}</p>
                <p><b>Admin Email:</b> ${user.email}</p>
                <br/>
-               <p>Please log in to the STR-DRG HQ Dashboard to approve or decline this application.</p>`
+               <p>Please log in to the TrackBells HQ Dashboard to approve or decline this application.</p>`
       });
     } catch (err) {
       console.error('Failed to send admin notification email:', err);

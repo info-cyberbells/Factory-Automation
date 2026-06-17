@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 // Dashboards
+import SuperAdminDashboard from './admin/SuperAdminDashboard';
 import AdminTrackerDashboard from './admin/AdminTrackerDashboard';
 import GateGuardDashboard from './gate/GateGuardDashboard';
 import SupervisorDashboard from './production/SupervisorDashboard';
@@ -20,7 +21,7 @@ const Dashboard = () => {
   // Render dashboard based on role
   switch (user.role) {
     case 'super_admin':
-      return <Navigate to="/admin/organizations" replace />;
+      return <SuperAdminDashboard />;
     case 'admin':
       return <AdminTrackerDashboard />;
     case 'gate_guard':

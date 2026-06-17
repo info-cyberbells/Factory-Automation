@@ -282,7 +282,7 @@ const ProductionDashboard = () => {
           <form onSubmit={handleCreatePlan}>
             <div className="form-group">
               <label className="form-label">Model Number *</label>
-              <input className="form-input" placeholder="e.g. STR-DRG-2627.35..." value={planForm.modelNumber}
+              <input className="form-input" placeholder="e.g. TRACKBELLS-2627.35..." value={planForm.modelNumber}
                 onChange={e => setPlanForm({ ...planForm, modelNumber: e.target.value })} />
             </div>
             <div className="form-group">

@@ -31,6 +31,7 @@ const SalesDashboard = () => {
   const [showQcModal, setShowQcModal] = useState(false);
   const [editingQcId, setEditingQcId] = useState(null);
   const [qcForm, setQcForm] = useState({ materialName: '', quantity: 0, unit: 'pcs', remarks: '', qcType: 'inspected', invoiceNumber: '', invoiceUrl: '' });
+  const [invoiceFile, setInvoiceFile] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -93,15 +94,30 @@ const SalesDashboard = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const formData = new FormData();
+      formData.append('materialName', qcForm.materialName);
+      formData.append('quantity', qcForm.quantity);
+      formData.append('unit', qcForm.unit);
+      formData.append('remarks', qcForm.remarks);
+      formData.append('qcType', qcForm.qcType);
+      formData.append('invoiceNumber', qcForm.invoiceNumber);
+
+      if (invoiceFile) {
+        formData.append('invoiceFile', invoiceFile);
+      } else {
+        formData.append('invoiceUrl', qcForm.invoiceUrl);
+      }
+
       if (editingQcId) {
-        await operationsAPI.updateQualityLog(editingQcId, qcForm);
+        await operationsAPI.updateQualityLog(editingQcId, formData);
         toast.success('Quality invoice record updated');
       } else {
-        await operationsAPI.createQualityLog(qcForm);
+        await operationsAPI.createQualityLog(formData);
         toast.success('Quality invoice record created');
       }
       setShowQcModal(false);
       setQcForm({ materialName: '', quantity: 0, unit: 'pcs', remarks: '', qcType: 'inspected', invoiceNumber: '', invoiceUrl: '' });
+      setInvoiceFile(null);
       setEditingQcId(null);
       fetchData();
     } catch (err) {
@@ -121,6 +137,7 @@ const SalesDashboard = () => {
       invoiceNumber: log.invoiceNumber || '',
       invoiceUrl: log.invoiceUrl || ''
     });
+    setInvoiceFile(null);
     setEditingQcId(log._id);
     setShowQcModal(true);
   };
@@ -186,7 +203,7 @@ const SalesDashboard = () => {
           Manufacturing Orders
         </TabBtn>
         <TabBtn active={activeTab === 'qc_verification'} onClick={() => setActiveTab('qc_verification')} icon={<HiOutlineClipboardCheck />}>
-          QC Invoice Verification ({qualityLogs.filter(l => l.status === 'pending_verification').length})
+          QC Invoice Verification ({qualityLogs.filter(l => l.invoiceNumber && l.status === 'pending_verification').length})
         </TabBtn>
         <div style={{ flex: 1 }} />
         <button className="btn btn-secondary btn-sm" onClick={fetchData}><HiOutlineRefresh /> Reload</button>
@@ -344,21 +361,35 @@ const SalesDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {buildJobs.map(job => (
+                     {buildJobs.map(job => (
                       <tr key={job._id}>
                         <td>
                           <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{job.productName}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Size: {job.productSize || 'N/A'}</div>
+                          {job.machineId && typeof job.machineId === 'object' ? (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineId.name} {job.machineId.capacity ? `(${job.machineId.capacity})` : ''}</div>
+                          ) : job.machineName ? (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineName}</div>
+                          ) : null}
+                          {job.materialsUsed && job.materialsUsed.length > 0 && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>📦 {job.materialsUsed.map(m => `${m.quantity} ${m.unit} ${m.materialName}`).join(', ')}</div>
+                          )}
                         </td>
                         <td style={{ fontWeight: 700 }}>{job.orderQuantity} pcs</td>
                         <td>
                           <span className={`azure-badge ${
                             job.status === 'pending' ? 'warning' :
                             job.status === 'shortage_reported' ? 'danger' :
-                            job.status === 'processing' ? 'running' : 'success'
+                            job.status === 'processing' ? 'running' :
+                            job.status === 'delayed' ? 'danger' : 'success'
                           }`}>
-                            {job.status.replace('_', ' ')}
+                            {job.status === 'delayed' ? '⚠️ delayed' : job.status.replace('_', ' ')}
                           </span>
+                          {job.estimatedDate && (
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                              Est: {new Date(job.estimatedDate).toLocaleString()}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -396,43 +427,51 @@ const SalesDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {qualityLogs.filter(l => l.invoiceNumber).map(log => (
-                  <tr key={log._id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {log.materialName}
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>{log.remarks}</div>
-                    </td>
-                    <td style={{ fontWeight: 700 }}>{log.quantity} {log.unit}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--success)' }}>{log.invoiceNumber}</td>
-                    <td>
-                      <a href={log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.8rem' }}>
-                        View Scan
-                      </a>
-                    </td>
-                    <td>
-                      <span className={`azure-badge ${
-                        log.status === 'pending_verification' ? 'warning' : 'success'
-                      }`}>
-                        {log.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td>
-                      {log.status === 'pending_verification' ? (
-                        <button className="btn btn-accent btn-sm" onClick={() => handleVerifyQC(log._id)}>
-                          <HiOutlineCheckCircle /> Verify
-                        </button>
-                      ) : (
-                        <span style={{ color: 'var(--success)', fontWeight: 600 }}>Verified</span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <button style={{ color: 'var(--primary-light)', background: 'none' }} onClick={() => handleEditQcLog(log)}>Edit</button>
-                        <button style={{ color: 'var(--danger)', background: 'none' }} onClick={() => handleDeleteQcLog(log._id)}>Delete</button>
-                      </div>
+                {qualityLogs.filter(l => l.invoiceNumber).length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-dim)' }}>
+                      No QC invoice logs registered.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  qualityLogs.filter(l => l.invoiceNumber).map(log => (
+                    <tr key={log._id}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {log.materialName}
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>{log.remarks}</div>
+                      </td>
+                      <td style={{ fontWeight: 700 }}>{log.quantity} {log.unit}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--success)' }}>{log.invoiceNumber}</td>
+                      <td>
+                        <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.8rem' }}>
+                          View Scan
+                        </a>
+                      </td>
+                      <td>
+                        <span className={`azure-badge ${
+                          log.status === 'pending_verification' ? 'warning' : 'success'
+                        }`}>
+                          {log.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        {log.status === 'pending_verification' ? (
+                          <button className="btn btn-accent btn-sm" onClick={() => handleVerifyQC(log._id)}>
+                            <HiOutlineCheckCircle /> Verify
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--success)', fontWeight: 600 }}>Verified</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <button style={{ color: 'var(--primary-light)', background: 'none' }} onClick={() => handleEditQcLog(log)}>Edit</button>
+                          <button style={{ color: 'var(--danger)', background: 'none' }} onClick={() => handleDeleteQcLog(log._id)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -475,8 +514,19 @@ const SalesDashboard = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Invoice scan URL link</label>
-              <input type="text" className="form-input" value={qcForm.invoiceUrl} onChange={e => setQcForm({ ...qcForm, invoiceUrl: e.target.value })} placeholder="Simulated scan link..." />
+              <label className="form-label">Upload Invoice Document</label>
+              <input 
+                type="file" 
+                className="form-input" 
+                onChange={e => setInvoiceFile(e.target.files[0])} 
+                accept="image/*,application/pdf"
+                style={{ padding: '8px 12px' }}
+              />
+              {qcForm.invoiceUrl && !invoiceFile && (
+                <div style={{ fontSize: '0.78rem', marginTop: '6px' }}>
+                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
+                </div>
+              )}
             </div>
 
             <div className="form-group">

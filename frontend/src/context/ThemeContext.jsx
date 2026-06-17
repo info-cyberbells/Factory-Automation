@@ -7,27 +7,15 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
+  const [theme] = useState('light');
 
   useEffect(() => {
-    // Check local storage for saved theme
-    const savedTheme = localStorage.getItem('erp-theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // Default to dark mode
-      setTheme('dark');
-    }
+    // Always apply light theme to html element
+    document.documentElement.setAttribute('data-theme', 'light');
   }, []);
 
-  useEffect(() => {
-    // Apply theme to html element
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('erp-theme', theme);
-  }, [theme]);
-
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    // Disabled theme toggling
   };
 
   return (

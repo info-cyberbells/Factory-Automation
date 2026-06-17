@@ -31,10 +31,18 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="auth-page" style={{ justifyContent: 'center' }}>
-      <div style={{
+    <div className="auth-page" style={{
+      justifyContent: 'center',
+      backgroundImage: 'var(--auth-bg-gradient), url("/factory_bg.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
+      <div className="card-glass" style={{
         width: '100%', maxWidth: '460px', padding: '40px',
-        margin: '0 auto', animation: 'fadeInUp 0.6s ease'
+        margin: 'auto 20px', animation: 'fadeInUp 0.6s ease',
+        background: 'var(--bg-secondary)', borderRadius: '16px',
+        boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)'
       }}>
         {/* Back Link */}
         <Link to="/login" style={{
@@ -58,7 +66,7 @@ const ForgotPassword = () => {
 
             <h2 style={{
               fontFamily: 'Poppins, sans-serif', fontSize: '1.8rem',
-              fontWeight: 700, color: '#fff', marginBottom: '8px'
+              fontWeight: 700, color: '#000000', marginBottom: '8px'
             }}>Forgot Password?</h2>
             <p style={{ color: '#8892b0', fontSize: '0.95rem', marginBottom: '32px', lineHeight: 1.7 }}>
               No worries! Enter your email and we'll send you a link to reset your password.
@@ -113,7 +121,7 @@ const ForgotPassword = () => {
 
             <h2 style={{
               fontFamily: 'Poppins, sans-serif', fontSize: '1.6rem',
-              fontWeight: 700, color: '#fff', marginBottom: '12px'
+              fontWeight: 700, color: '#000000', marginBottom: '12px'
             }}>Check Your Email</h2>
             <p style={{ color: '#8892b0', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '8px' }}>
               We've sent a password reset link to:
