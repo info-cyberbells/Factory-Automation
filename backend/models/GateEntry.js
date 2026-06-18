@@ -117,7 +117,7 @@ GateEntrySchema.pre('save', async function() {
 });
 
 // Index for fast queries
-GateEntrySchema.index({ billNumber: 1 });
+// GateEntrySchema.index({ billNumber: 1 });
 GateEntrySchema.index({ status: 1 });
 GateEntrySchema.index({ createdAt: -1 });
 GateEntrySchema.index({ vendorName: 1 });

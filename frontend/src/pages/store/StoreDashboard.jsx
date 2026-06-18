@@ -11,7 +11,7 @@ import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
-const SOCKET_URL = process.env.REACT_APP_API_URL || `http://49.13.70.253:9898`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
 
 const StoreDashboard = () => {
   const { user } = useAuth();
@@ -492,7 +492,7 @@ const StoreDashboard = () => {
                           <span style={{ fontWeight: 600 }}>{log.invoiceNumber}</span>
                           <br />
                           {/* <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.78rem' }}>View Scan</a> */}
-                          <a href={log.invoiceUrl?.startsWith('/uploads/') ? `http://49.13.70.253:9898${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.78rem' }}>View Scan</a>
+                          <a href={log.invoiceUrl?.startsWith('/uploads/') ? `${SOCKET_URL}${log.invoiceUrl}` : log.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)', fontSize: '0.78rem' }}>View Scan</a>
                         </div>
                       ) : 'No invoice'}
                     </td>
@@ -715,7 +715,7 @@ const StoreDashboard = () => {
               {qcForm.invoiceUrl && !invoiceFile && (
                 <div style={{ fontSize: '0.78rem', marginTop: '6px' }}>
                   {/* Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://${window.location.hostname}:5000${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a> */}
-                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `http://49.13.70.253:9898${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
+                  Current: <a href={qcForm.invoiceUrl.startsWith('/uploads/') ? `${SOCKET_URL}${qcForm.invoiceUrl}` : qcForm.invoiceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: 'var(--primary-light)' }}>View Existing Scan</a>
                 </div>
               )}
             </div>

@@ -47,7 +47,8 @@ exports.scanInvoice = async (req, res, next) => {
     }
 
     // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
-    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://49.13.70.253:8989';
+    // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8989';
+    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8989';
     
     const form = new FormData();
     form.append('file', req.file.buffer, req.file.originalname);

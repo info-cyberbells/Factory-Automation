@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -12,11 +13,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
+# CORS Origins Setup
+allowed_origins_env = os.getenv("CORS_ALLOWED_ORIGINS")
+if allowed_origins_env:
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+else:
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:3009",
+        "http://localhost:9898",
+        "http://127.0.0.1:9898"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     # allow_origins=["http://localhost:3000", "http://localhost:5000"],
-    allow_origins=["http://49.13.70.253:3008", "http://49.13.70.253:9898"],
+    # allow_origins=["http://localhost:3009", "http://localhost:9898"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

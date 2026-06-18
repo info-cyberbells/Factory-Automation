@@ -65,7 +65,7 @@ WipBatchSchema.pre('validate', async function() {
   }
 });
 
-WipBatchSchema.index({ batchNumber: 1 });
+// WipBatchSchema.index({ batchNumber: 1 });
 WipBatchSchema.index({ planId: 1 });
 WipBatchSchema.index({ currentStage: 1 });
 WipBatchSchema.index({ status: 1 });

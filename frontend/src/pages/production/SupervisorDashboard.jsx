@@ -10,7 +10,8 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
-const SOCKET_URL = process.env.REACT_APP_API_URL || `http://49.13.70.253:9898`;
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://localhost:9898`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
 
 const SupervisorDashboard = () => {
   const { user } = useAuth();
@@ -471,7 +472,7 @@ const SupervisorDashboard = () => {
                               View
                             </a> */}
                             <a 
-                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               target="_blank" 
                               rel="noreferrer" 
                               className="btn btn-secondary btn-sm"
@@ -490,7 +491,7 @@ const SupervisorDashboard = () => {
                               Download
                             </a> */}
                             <a 
-                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               download
                               target="_blank"
                               rel="noreferrer"

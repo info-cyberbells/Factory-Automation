@@ -4,6 +4,10 @@ import { gateEntryAPI } from '../../services/api';
 import { HiOutlineTruck, HiOutlineSave, HiOutlineClipboardList, HiOutlineSearch } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
+// const SOCKET_URL = process.env.REACT_APP_API_URL || `http://localhost:9898`;
+const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
+
 const GateGuardDashboard = () => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +241,7 @@ const GateGuardDashboard = () => {
                               View
                             </a> */}
                             <a 
-                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               target="_blank" 
                               rel="noreferrer" 
                               className="btn btn-secondary btn-sm"
@@ -256,7 +260,7 @@ const GateGuardDashboard = () => {
                               Download
                             </a> */}
                             <a 
-                              href={`http://49.13.70.253:9898${entry.invoiceUrl}`} 
+                              href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               download
                               target="_blank"
                               rel="noreferrer"

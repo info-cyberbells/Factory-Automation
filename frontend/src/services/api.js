@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API = axios.create({
   // baseURL: `http://${window.location.hostname}:5000/api`,
-  baseURL: `http://49.13.70.253:9898/api`,
+  baseURL: `${process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin)}/api`,
   headers: {
     'Content-Type': 'application/json'
   }

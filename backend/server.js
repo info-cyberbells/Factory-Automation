@@ -16,9 +16,39 @@ const app = express();
 const server = http.createServer(app);
 
 // Initialize Socket.io
+// const io = new Server(server, {
+//   cors: {
+//     origin: true,
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true
+//   }
+// });
+// const io = new Server(server, {
+//   cors: {
+//     origin: [
+//       "http://localhost:3000",
+//       "http://localhost:3009",
+//       "http://localhost:9898",
+//       "https://trackbells.com",
+//       "http://trackbells.com",
+//       "https://www.trackbells.com",
+//       "http://www.trackbells.com"
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true
+//   }
+// });
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',') 
+  : [
+      "http://localhost:3000",
+      "http://localhost:3009"
+    ];
+
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }
@@ -54,8 +84,24 @@ io.on('connection', (socket) => {
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// app.use(cors({
+//   origin: true,
+//   credentials: true
+// }));
+// app.use(cors({
+//   origin: [
+//     "http://localhost:3000",
+//     "http://localhost:3009",
+//     "http://localhost:9898",
+//     "https://trackbells.com",
+//     "http://trackbells.com",
+//     "https://www.trackbells.com",
+//     "http://www.trackbells.com"
+//   ],
+//   credentials: true
+// }));
 app.use(cors({
-  origin: true,
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -122,6 +168,9 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+// server.listen(PORT, () => {
+//   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+// });
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT} (listening on all interfaces)`);
 });
