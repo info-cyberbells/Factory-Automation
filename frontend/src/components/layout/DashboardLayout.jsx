@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useOrg } from '../../context/OrgContext';
-import { notificationAPI, adminOrgAPI } from '../../services/api';
+import { notificationAPI, adminOrgAPI, authAPI, uploadAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 import {
@@ -17,6 +17,15 @@ import {
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://localhost:9898`;
 const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
+
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) {
+    return `${SOCKET_URL}${url}`;
+  }
+  return url;
+};
+
 
 // Role-based menu configuration
 const getMenuForRole = (role, email, permissions = []) => {
@@ -112,7 +121,7 @@ const ROLE_COLORS = {
 };
 
 const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
-  const { user, logout, isReverificationRequired, setIsReverificationRequired } = useAuth();
+  const { user, setUser, logout, isReverificationRequired, setIsReverificationRequired } = useAuth();
   const { settings } = useOrg();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -131,6 +140,39 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   // Profile State
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const profileRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+
+  const handleProfileImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingProfile(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadRes = await uploadAPI.uploadFile(formData);
+      if (uploadRes.data && uploadRes.data.success) {
+        const fileUrl = uploadRes.data.fileUrl;
+        
+        // Update user profile in backend
+        const updateRes = await authAPI.updateProfile({ profileImage: fileUrl });
+        if (updateRes.data && updateRes.data.success) {
+          // Update user in context
+          const updatedUser = { ...user, profileImage: fileUrl };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          toast.success('Profile image updated successfully!');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload profile image');
+    } finally {
+      setUploadingProfile(false);
+    }
+  };
 
   // Superadmin Org Selection State
   const [orgs, setOrgs] = useState([]);
@@ -448,9 +490,9 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             </>
           ) : (
             <>
-              {settings.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:')) ? (
+              {settings.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) ? (
                 <div className="logo">
-                  <img src={settings.logo} alt="Logo" style={{ maxHeight: '36px', maxWidth: '36px', borderRadius: '4px' }} />
+                  <img src={getImageUrl(settings.logo)} alt="Logo" style={{ maxHeight: '36px', maxWidth: '36px', borderRadius: '4px' }} />
                 </div>
               ) : (
                 <div className="logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -514,11 +556,34 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       {/* MAIN */}
       <div className="main-content">
         <header className="top-navbar">
-          <div className="navbar-left">
-            <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              <HiOutlineMenu />
-            </button>
-            <h2>{pageTitle}</h2>
+          <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              overflow: 'hidden'
+            }}>
+              {settings?.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) ? (
+                <img src={getImageUrl(settings.logo)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '20px' }}>{settings?.logo || '🏭'}</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {settings?.brandName || 'TrackBells ERP'}
+              </h1>
+              {settings?.brandSubtitle && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 500, lineHeight: 1.2 }}>
+                  {settings.brandSubtitle}
+                </span>
+              )}
+            </div>
           </div>
           <div className="navbar-right">
             {user?.role === 'super_admin' && !user?.organizationId && (
@@ -588,7 +653,13 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             
             <div className="profile-wrapper" ref={profileRef} style={{ position: 'relative' }}>
               <div className="user-menu" onClick={() => setShowProfilePanel(!showProfilePanel)} title="View Profile">
-                <div className="user-avatar">{getUserInitials(user?.name)}</div>
+                <div className="user-avatar" style={{ overflow: 'hidden' }}>
+                  {user?.profileImage ? (
+                    <img src={getImageUrl(user.profileImage)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    getUserInitials(user?.name)
+                  )}
+                </div>
                 <div className="user-info">
                   <div className="user-name">{user?.name || 'User'}</div>
                   <div className="user-role" style={{ color: roleColor }}>{roleLabel}</div>
@@ -599,7 +670,44 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
               {showProfilePanel && (
                 <div className="notification-dropdown glass-card" style={{ width: '300px' }}>
                   <div className="notif-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '24px 16px' }}>
-                    <div className="user-avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: `linear-gradient(135deg, ${roleColor}, var(--accent))` }}>{getUserInitials(user?.name)}</div>
+                    <div className="user-avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: `linear-gradient(135deg, ${roleColor}, var(--accent))`, overflow: 'hidden', position: 'relative' }}>
+                      {user?.profileImage ? (
+                        <img src={getImageUrl(user.profileImage)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        getUserInitials(user?.name)
+                      )}
+                    </div>
+                    
+                    {/* Upload button */}
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleProfileImageChange} 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()} 
+                        disabled={uploadingProfile}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '6px',
+                          padding: '4px 12px',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                        onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                      >
+                        {uploadingProfile ? 'Uploading...' : 'Change Photo'}
+                      </button>
+                    </div>
+
                     <div style={{ textAlign: 'center' }}>
                       <h4 style={{ margin: 0, fontSize: '1.2rem', marginBottom: '4px' }}>{user?.name || 'User'}</h4>
                       <span style={{ fontSize: '0.8rem', color: roleColor, fontWeight: 600, background: `${roleColor}15`, padding: '4px 12px', borderRadius: '12px' }}>
@@ -679,7 +787,14 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
               )}
             </div>
           ) : (
-            children
+            <>
+              {pageTitle && (
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '24px', fontFamily: 'Poppins, sans-serif' }}>
+                  {pageTitle}
+                </h2>
+              )}
+              {children}
+            </>
           )}
         </div>
       </div>

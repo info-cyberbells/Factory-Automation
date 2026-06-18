@@ -32,6 +32,7 @@ import QualityDashboard from './pages/quality/QualityDashboard';
 import SalesDashboard from './pages/sales/SalesDashboard';
 import AdminTrackerDashboard from './pages/admin/AdminTrackerDashboard';
 import SupportDashboard from './pages/admin/SupportDashboard';
+import OptionalFeature from './pages/admin/OptionalFeature';
 
 // Protected Route - requires auth
 const ProtectedRoute = ({ children }) => {
@@ -169,6 +170,9 @@ function App() {
             } />
             <Route path="/users" element={
               <RoleRoute roles={['super_admin', 'admin']}><UserManagement /></RoleRoute>
+            } />
+            <Route path="/optional-feature" element={
+              <RoleRoute roles={['admin']}><OptionalFeature /></RoleRoute>
             } />
             <Route path="/settings" element={
               <RoleRoute roles={['super_admin']}><SettingsDashboard /></RoleRoute>

@@ -110,6 +110,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/gate-entry', require('./routes/gateEntryRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/production', require('./routes/productionRoutes'));

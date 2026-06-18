@@ -9,6 +9,17 @@ import {
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
+const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
+
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) {
+    return `${SOCKET_URL}${url}`;
+  }
+  return url;
+};
+
+
 const ROLES = [
   { value: 'super_admin', label: 'Super Admin', color: '#ef4444', emoji: '👑' },
   { value: 'admin', label: 'Admin', color: '#f97316', emoji: '🛡️' },
@@ -110,7 +121,7 @@ const UserManagement = () => {
   };
 
   const openEditModal = (u) => {
-    setEditData({ id: u._id, name: u.name, email: u.email, phone: u.phone || '', department: u.department || '' });
+    setEditData({ id: u._id, name: u.name, email: u.email, phone: u.phone || '', department: u.department || '', profileImage: u.profileImage || '' });
     setShowEditModal(true);
   };
 
@@ -328,8 +339,15 @@ const UserManagement = () => {
                           width: '38px', height: '38px', borderRadius: '10px',
                           background: `linear-gradient(135deg, ${displayColor}40, ${displayColor}20)`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.85rem', fontWeight: 700, color: displayColor, flexShrink: 0
-                        }}>{u.name?.charAt(0).toUpperCase()}</div>
+                          fontSize: '0.85rem', fontWeight: 700, color: displayColor, flexShrink: 0,
+                          overflow: 'hidden'
+                        }}>
+                          {u.profileImage ? (
+                            <img src={getImageUrl(u.profileImage)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            u.name?.charAt(0).toUpperCase()
+                          )}
+                        </div>
                         <div>
                           <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.9rem' }}>
                             {u.name} {isCurrentUser && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(You)</span>}
@@ -620,9 +638,14 @@ const UserManagement = () => {
                 width: '70px', height: '70px', borderRadius: '20px',
                 background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.8rem', fontWeight: 700, color: '#ffffff', boxShadow: '0 8px 16px rgba(59,130,246,0.2)'
+                fontSize: '1.8rem', fontWeight: 700, color: '#ffffff', boxShadow: '0 8px 16px rgba(59,130,246,0.2)',
+                overflow: 'hidden'
               }}>
-                {editData.name?.charAt(0).toUpperCase() || 'U'}
+                {editData.profileImage ? (
+                  <img src={getImageUrl(editData.profileImage)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  editData.name?.charAt(0).toUpperCase() || 'U'
+                )}
               </div>
               <div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{editData.name || 'User'}</h4>

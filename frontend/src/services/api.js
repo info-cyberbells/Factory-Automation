@@ -210,6 +210,10 @@ export const supportAPI = {
   replyTicket: (id, replyText) => API.put(`/support/tickets/${id}/reply`, { replyText }),
 };
 
+export const uploadAPI = {
+  uploadFile: (formData) => API.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+};
+
 export default API;
 
 

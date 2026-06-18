@@ -17,7 +17,8 @@ const sendTokenResponse = (user, statusCode, res) => {
     department: user.department,
     phone: user.phone,
     isActive: user.isActive,
-    organizationId: user.organizationId
+    organizationId: user.organizationId,
+    profileImage: user.profileImage
   };
 
   res.status(statusCode).json({
@@ -340,7 +341,7 @@ exports.resetPassword = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const fieldsToUpdate = {};
-    const allowed = ['name', 'phone'];
+    const allowed = ['name', 'phone', 'profileImage'];
 
     allowed.forEach(field => {
       if (req.body[field] !== undefined) {
