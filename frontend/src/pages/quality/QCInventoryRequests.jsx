@@ -13,7 +13,8 @@ const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${w
 
 const QCInventoryRequests = () => {
   const { user } = useAuth();
-  const [requests, setRequests] = useState([]);
+  const [allItems, setAllItems] = useState([]);
+  const [qcFilter, setQcFilter] = useState('pending'); // 'pending', 'completed'
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
@@ -27,15 +28,21 @@ const QCInventoryRequests = () => {
     setLoading(true);
     try {
       const res = await operationsAPI.getInventory();
-      // Filter only items sent for QC
-      const pendingQC = res.data.data.filter(item => item.qualityStatus === 'sent_for_qc');
-      setRequests(pendingQC);
+      setAllItems(res.data.data);
     } catch (err) {
       toast.error('Failed to load QC requests');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const requests = allItems.filter(item => {
+    if (qcFilter === 'pending') {
+      return item.qualityStatus === 'sent_for_qc';
+    } else {
+      return ['verified', 'rejected'].includes(item.qualityStatus);
+    }
+  });
 
   useEffect(() => {
     fetchQCRequests();
@@ -126,15 +133,52 @@ const QCInventoryRequests = () => {
           </button>
         </div>
 
-        {/* Toolbar */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', alignItems: 'center' }}>
-          <div className="form-input-icon" style={{ width: '100%', maxWidth: '360px' }}>
+        {/* Toolbar & Filter Tabs */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+            <button 
+              onClick={() => setQcFilter('pending')} 
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                background: qcFilter === 'pending' ? 'var(--primary-glow)' : 'transparent',
+                color: qcFilter === 'pending' ? 'var(--primary)' : 'var(--text-dim)',
+                border: `1px solid ${qcFilter === 'pending' ? 'var(--border-primary)' : 'transparent'}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                outline: 'none'
+              }}
+            >
+              Pending Verification ({allItems.filter(i => i.qualityStatus === 'sent_for_qc').length})
+            </button>
+            <button 
+              onClick={() => setQcFilter('completed')} 
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                background: qcFilter === 'completed' ? 'var(--primary-glow)' : 'transparent',
+                color: qcFilter === 'completed' ? 'var(--primary)' : 'var(--text-dim)',
+                border: `1px solid ${qcFilter === 'completed' ? 'var(--border-primary)' : 'transparent'}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                outline: 'none'
+              }}
+            >
+              Inspection History ({allItems.filter(i => ['verified', 'rejected'].includes(i.qualityStatus)).length})
+            </button>
+          </div>
+
+          <div className="form-input-icon" style={{ width: '100%', maxWidth: '300px' }}>
             <HiOutlineSearch className="icon" />
             <input
               type="text"
               className="form-input"
               style={{ padding: '8px 12px 8px 36px', fontSize: '0.85rem', height: '40px' }}
-              placeholder="Search by item name or location..."
+              placeholder="Search by item name..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -148,8 +192,12 @@ const QCInventoryRequests = () => {
         ) : filteredRequests.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-dim)' }}>
             <HiOutlineClipboardCheck style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.2, color: 'var(--success)' }} />
-            <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>No Pending QC Requests</p>
-            <p style={{ fontSize: '0.82rem' }}>All materials and items are currently verified.</p>
+            <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              {qcFilter === 'pending' ? 'No Pending QC Requests' : 'No Inspection History'}
+            </p>
+            <p style={{ fontSize: '0.82rem' }}>
+              {qcFilter === 'pending' ? 'All materials and items are currently verified.' : 'Items verified or rejected by you will appear here.'}
+            </p>
           </div>
         ) : (
           <div className="azure-table-container">
@@ -161,8 +209,18 @@ const QCInventoryRequests = () => {
                   <th>Billed Quantity</th>
                   <th>Warehouse Location</th>
                   <th>Item Specifications</th>
-                  <th>Request Date</th>
-                  <th style={{ textAlign: 'center' }}>QC Actions</th>
+                  {qcFilter === 'pending' ? (
+                    <>
+                      <th>Request Date</th>
+                      <th style={{ textAlign: 'center' }}>QC Actions</th>
+                    </>
+                  ) : (
+                    <>
+                      <th>QC Status</th>
+                      <th>QC Remarks</th>
+                      <th>Audit Date</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -179,52 +237,71 @@ const QCInventoryRequests = () => {
                     </td>
                     <td style={{ color: 'var(--accent-light)', fontWeight: 600 }}>{item.location}</td>
                     <td style={{ fontSize: '0.85rem' }}>{item.size || item.description || 'Standard Specs'}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
-                      <HiOutlineClock style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                      {formatDate(item.qcRequestedAt)}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleApprove(item)}
-                          title="Approve Quality (Verify)"
-                          style={{
-                            background: 'rgba(34, 197, 94, 0.1)',
-                            border: '1px solid rgba(34, 197, 94, 0.3)',
-                            borderRadius: '6px',
-                            color: 'var(--success)',
-                            padding: '4px 10px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600
-                          }}
-                        >
-                          <HiOutlineCheck /> Verify
-                        </button>
-                        <button
-                          onClick={() => openRejectModal(item)}
-                          title="Reject / Flag Issues"
-                          style={{
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                            borderRadius: '6px',
-                            color: 'var(--danger)',
-                            padding: '4px 10px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600
-                          }}
-                        >
-                          <HiOutlineX /> Reject
-                        </button>
-                      </div>
-                    </td>
+                    {qcFilter === 'pending' ? (
+                      <>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
+                          <HiOutlineClock style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                          {formatDate(item.qcRequestedAt)}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => handleApprove(item)}
+                              title="Approve Quality (Verify)"
+                              style={{
+                                background: 'rgba(34, 197, 94, 0.1)',
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                borderRadius: '6px',
+                                color: 'var(--success)',
+                                padding: '4px 10px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600
+                              }}
+                            >
+                              <HiOutlineCheck /> Verify
+                            </button>
+                            <button
+                              onClick={() => openRejectModal(item)}
+                              title="Reject / Flag Issues"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '6px',
+                                color: 'var(--danger)',
+                                padding: '4px 10px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600
+                              }}
+                            >
+                              <HiOutlineX /> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>
+                          <span className={`azure-badge ${item.qualityStatus === 'verified' ? 'success' : 'danger'}`} style={{ textTransform: 'uppercase' }}>
+                            {item.qualityStatus === 'verified' ? 'Passed' : 'Rejected'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          {item.qcRemarks || 'No remarks provided.'}
+                        </td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
+                          <HiOutlineClock style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                          {formatDate(item.updatedAt)}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

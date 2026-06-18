@@ -493,7 +493,15 @@ const SupervisorDashboard = () => {
                     <th>Quantity</th>
                     <th>Driver / Vehicle</th>
                     <th>Invoice Document</th>
-                    <th>Actions</th>
+                    {gateFilter === 'pending' ? (
+                      <th>Actions</th>
+                    ) : (
+                      <>
+                        <th>Verifier Info</th>
+                        <th>Remarks / Notes</th>
+                        <th>Status</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -516,15 +524,6 @@ const SupervisorDashboard = () => {
                       <td>
                         {entry.invoiceUrl ? (
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            {/* <a 
-                              href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                            >
-                              View
-                            </a> */}
                             <a 
                               href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               target="_blank" 
@@ -534,16 +533,6 @@ const SupervisorDashboard = () => {
                             >
                               View
                             </a>
-                            {/* <a 
-                              href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
-                              download
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
-                            >
-                              Download
-                            </a> */}
                             <a 
                               href={`${SOCKET_URL}${entry.invoiceUrl}`} 
                               download
@@ -559,8 +548,8 @@ const SupervisorDashboard = () => {
                           <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No Invoice</span>
                         )}
                       </td>
-                      <td>
-                        {entry.status === 'pending' ? (
+                      {gateFilter === 'pending' ? (
+                        <td>
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
                             <button className="btn btn-accent btn-sm" style={{ background: 'linear-gradient(135deg, #64748b, #475569)', color: '#ffffff', borderColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => openAddItemsModal(entry)}>
                               <HiOutlineCube /> Add Items & Verify
@@ -569,16 +558,29 @@ const SupervisorDashboard = () => {
                               <HiOutlineCheckCircle /> Verify Only
                             </button>
                           </div>
-                        ) : (
-                          <span className={`azure-badge ${
-                            entry.status === 'verified' ? 'running' :
-                            entry.status === 'grn_created' ? 'success' : 'danger'
-                          }`} style={{ textTransform: 'capitalize' }}>
-                            {entry.status === 'verified' ? 'Verified' :
-                             entry.status === 'grn_created' ? 'GRN Created' : entry.status}
-                          </span>
-                        )}
-                      </td>
+                        </td>
+                      ) : (
+                        <>
+                          <td>
+                            <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{entry.verifiedBy?.name || 'Supervisor'}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+                              ⏱️ {new Date(entry.updatedAt).toLocaleString()}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {entry.remarks || 'Verified without remarks.'}
+                          </td>
+                          <td>
+                            <span className={`azure-badge ${
+                              entry.status === 'verified' ? 'running' :
+                              entry.status === 'grn_created' ? 'success' : 'danger'
+                            }`} style={{ textTransform: 'capitalize' }}>
+                              {entry.status === 'verified' ? 'Verified' :
+                               entry.status === 'grn_created' ? 'GRN Created' : entry.status}
+                            </span>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
