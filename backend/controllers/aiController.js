@@ -115,8 +115,7 @@ exports.chatWithAI = async (req, res, next) => {
     }
 
     // Default: Forward to Python AI service
-    // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
-    // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8989';
+    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8989';
     const response = await axios.post(`${pythonApiUrl}/chat`, { message }, { timeout: 5000 });
 
     res.status(200).json({
@@ -124,8 +123,12 @@ exports.chatWithAI = async (req, res, next) => {
       reply: response.data.reply
     });
   } catch (error) {
-    console.error('AI Chat Error:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to connect to Chatbot' });
+    console.error('AI Chat Error Details:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    res.status(500).json({ success: false, message: 'Failed to connect to Chatbot', error: error.message });
   }
 };
 
