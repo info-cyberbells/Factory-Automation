@@ -562,7 +562,7 @@ const SupervisorDashboard = () => {
                       <td>
                         {entry.status === 'pending' ? (
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
-                            <button className="btn btn-accent btn-sm" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)', borderColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => openAddItemsModal(entry)}>
+                            <button className="btn btn-accent btn-sm" style={{ background: 'linear-gradient(135deg, #64748b, #475569)', color: '#ffffff', borderColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => openAddItemsModal(entry)}>
                               <HiOutlineCube /> Add Items & Verify
                             </button>
                             <button className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => handleOpenGateVerify(entry._id)}>
@@ -1110,7 +1110,7 @@ const SupervisorDashboard = () => {
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setShowAddItemsModal(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
+              <button type="submit" className="btn" style={{ background: 'linear-gradient(135deg, #64748b, #475569)', color: '#ffffff', border: 'none' }} disabled={submitting}>
                 {submitting ? 'Saving & Verifying...' : 'Save & Verify'}
               </button>
             </div>

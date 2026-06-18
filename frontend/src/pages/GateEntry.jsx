@@ -385,7 +385,7 @@ const GateEntry = () => {
                     <td style={{ ...tdStyle, display: 'flex', gap: '6px' }}>
                       {entry.status === 'pending' && (
                         <>
-                          <ActionBtn icon={<HiOutlineCube />} title="Add Items & Verify" color="#a855f7"
+                          <ActionBtn icon={<HiOutlineCube />} title="Add Items & Verify" color="#64748b"
                             onClick={() => openAddItemsModal(entry)} />
                           <ActionBtn icon={<HiOutlineCheckCircle />} title="Verify Only" color="#3b82f6"
                             onClick={() => handleVerify(entry._id)} />
@@ -678,9 +678,9 @@ const GateEntry = () => {
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddItemsModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Saving & Verifying...' : 'Save & Verify'}
-                </button>
+                 <button type="submit" className="btn" style={{ background: 'linear-gradient(135deg, #64748b, #475569)', color: '#ffffff', border: 'none' }} disabled={submitting}>
+                   {submitting ? 'Saving & Verifying...' : 'Save & Verify'}
+                 </button>
               </div>
             </form>
           </div>

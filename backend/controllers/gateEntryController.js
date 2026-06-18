@@ -178,7 +178,7 @@ exports.verifyGateEntry = async (req, res, next) => {
 
     entry.status = 'verified';
     entry.verifiedBy = req.user._id;
-    if (req.body.remarks) {
+    if (req.body && req.body.remarks) {
       entry.remarks = req.body.remarks;
     }
     await entry.save();
@@ -212,7 +212,7 @@ exports.createGRN = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'GRN already created for this entry' });
     }
 
-    const { receivedQuantity, qualityStatus, remarks } = req.body;
+    const { receivedQuantity, qualityStatus, remarks } = req.body || {};
 
     // Update gate entry to GRN created
     entry.status = 'grn_created';

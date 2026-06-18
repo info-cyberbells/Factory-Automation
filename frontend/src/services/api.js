@@ -68,7 +68,7 @@ export const gateEntryAPI = {
   create: (data) => API.post('/gate-entry', data),
   update: (id, data) => API.put(`/gate-entry/${id}`, data),
   delete: (id) => API.delete(`/gate-entry/${id}`),
-  verify: (id) => API.put(`/gate-entry/${id}/verify`),
+  verify: (id, data = {}) => API.put(`/gate-entry/${id}/verify`, data),
   createGRN: (id, data) => API.put(`/gate-entry/${id}/create-grn`, data),
   getStats: () => API.get('/gate-entry/stats'),
 };
