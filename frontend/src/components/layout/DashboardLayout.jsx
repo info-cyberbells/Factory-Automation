@@ -788,11 +788,6 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             </div>
           ) : (
             <>
-              {pageTitle && (
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '24px', fontFamily: 'Poppins, sans-serif' }}>
-                  {pageTitle}
-                </h2>
-              )}
               {children}
             </>
           )}
