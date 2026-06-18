@@ -24,6 +24,8 @@ const QCInventoryRequests = () => {
   const [qcAction, setQcAction] = useState('approve'); // 'approve', 'reject'
   const [selectedItem, setSelectedItem] = useState(null);
   const [remarks, setRemarks] = useState('');
+  const [approvedQuantity, setApprovedQuantity] = useState('');
+  const [approvedUnit, setApprovedUnit] = useState('kg');
 
   const fetchQCRequests = useCallback(async () => {
     setLoading(true);
@@ -65,6 +67,8 @@ const QCInventoryRequests = () => {
     setSelectedItem(item);
     setQcAction(action);
     setRemarks(action === 'approve' ? 'Quality check passed. Item verified.' : '');
+    setApprovedQuantity(item.quantity);
+    setApprovedUnit(item.unit || 'kg');
     setShowDecideModal(true);
   };
 
@@ -74,13 +78,34 @@ const QCInventoryRequests = () => {
       toast.error('Please enter discrepancy remarks for rejection');
       return;
     }
+
+    if (qcAction === 'approve') {
+      const appQty = Number(approvedQuantity);
+      if (isNaN(appQty) || appQty <= 0) {
+        toast.error('Please specify a valid approved product quantity');
+        return;
+      }
+      if (appQty > selectedItem.quantity) {
+        toast.error(`Approved product quantity cannot exceed the original quantity (${selectedItem.quantity})`);
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const isApproved = qcAction === 'approve';
-      await operationsAPI.updateInventoryItem(selectedItem._id, {
+      const payload = {
         qualityStatus: isApproved ? 'verified' : 'rejected',
         qcRemarks: remarks.trim() || (isApproved ? 'Quality check passed. Item verified.' : 'Rejected.')
-      });
+      };
+
+      if (isApproved) {
+        payload.quantity = Number(approvedQuantity);
+        payload.unit = approvedUnit;
+      }
+
+      await operationsAPI.updateInventoryItem(selectedItem._id, payload);
+      
       if (isApproved) {
         toast.success(`QC Approved: "${selectedItem.name}" is now marked verified!`);
       } else {
@@ -336,6 +361,40 @@ const QCInventoryRequests = () => {
             </div>
 
             <form onSubmit={handleLogDecision}>
+              {qcAction === 'approve' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Approved Product Quantity *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      className="form-input"
+                      required
+                      value={approvedQuantity}
+                      onChange={e => setApprovedQuantity(e.target.value)}
+                      placeholder="Enter approved amount"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Stock Unit *</label>
+                    <select
+                      className="form-input"
+                      value={approvedUnit}
+                      onChange={e => setApprovedUnit(e.target.value)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <option value="kg">kg</option>
+                      <option value="pcs">pcs</option>
+                      <option value="meters">meters</option>
+                      <option value="liters">liters</option>
+                      <option value="bags">bags</option>
+                      <option value="boxes">boxes</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="form-label">
                   {qcAction === 'approve' ? 'Approval / Inspection Remarks' : 'Discrepancy / Damage Remarks *'}

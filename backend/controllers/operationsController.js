@@ -3,6 +3,7 @@ const Machine = require('../models/Machine');
 const BuildJob = require('../models/BuildJob');
 const QualityLog = require('../models/QualityLog');
 const Notification = require('../models/Notification');
+const ShortageBuySale = require('../models/ShortageBuySale');
 
 // Helper to broadcast socket events
 const broadcastToOrg = (req, eventName, payload) => {
@@ -50,10 +51,50 @@ exports.createInventoryItem = async (req, res, next) => {
   }
 };
 
+
 exports.updateInventoryItem = async (req, res, next) => {
   try {
+    const oldItem = await InventoryItem.findById(req.params.id);
+    if (!oldItem) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    // Validate that approved quantity does not exceed original quantity
+    if (req.body.qualityStatus === 'verified' && typeof req.body.quantity === 'number') {
+      if (req.body.quantity > oldItem.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Approved quantity (${req.body.quantity}) cannot exceed the original quantity (${oldItem.quantity})`
+        });
+      }
+    }
+
     const item = await InventoryItem.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+    
+    // Automatically create a shortage if qualityStatus is verified and quantity is reduced
+    if (req.body.qualityStatus === 'verified' && typeof req.body.quantity === 'number' && req.body.quantity < oldItem.quantity) {
+      const shortageQty = oldItem.quantity - req.body.quantity;
+      if (shortageQty > 0) {
+        const shortage = await ShortageBuySale.create({
+          type: 'shortage',
+          itemName: item.name,
+          quantity: shortageQty,
+          unit: req.body.unit || item.unit,
+          assignedTo: 'unassigned',
+          status: 'pending',
+          remarks: `Auto-created shortage from QC Audit Verification discrepancy. Inspected: ${oldItem.quantity}, Approved: ${req.body.quantity}. Remarks: ${req.body.qcRemarks || ''}`,
+          organizationId: req.user.organizationId
+        });
+
+        await createInternalNotification(
+          'QC Shortage Logged',
+          `Shortage of ${shortageQty} ${req.body.unit || item.unit} created for item: ${item.name} due to QC discrepancy.`,
+          'system',
+          req.user.organizationId
+        );
+
+        broadcastToOrg(req, 'communication_updated', { action: 'create', item: shortage });
+      }
+    }
+
     broadcastToOrg(req, 'inventory_updated', { action: 'update', item });
     res.status(200).json({ success: true, data: item });
   } catch (error) {
@@ -470,7 +511,6 @@ exports.deleteQualityLog = async (req, res, next) => {
 // ==========================================
 // SHORTAGE, BUY, SALES COMMUNICATION LOGS
 // ==========================================
-const ShortageBuySale = require('../models/ShortageBuySale');
 
 exports.getShortageBuySales = async (req, res, next) => {
   try {
