@@ -19,8 +19,9 @@ const QCInventoryRequests = () => {
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Reject Modal
-  const [showRejectModal, setShowRejectModal] = useState(false);
+  // QC Decision Modal
+  const [showDecideModal, setShowDecideModal] = useState(false);
+  const [qcAction, setQcAction] = useState('approve'); // 'approve', 'reject'
   const [selectedItem, setSelectedItem] = useState(null);
   const [remarks, setRemarks] = useState('');
 
@@ -60,43 +61,35 @@ const QCInventoryRequests = () => {
     };
   }, [fetchQCRequests, user?.organizationId]);
 
-  const handleApprove = async (item) => {
-    if (!window.confirm(`Approve quality check for "${item.name}"?`)) return;
-    try {
-      await operationsAPI.updateInventoryItem(item._id, {
-        qualityStatus: 'verified',
-        qcRemarks: 'Quality check passed. Item verified.'
-      });
-      toast.success(`QC Approved: "${item.name}" is now marked verified!`);
-      fetchQCRequests();
-    } catch (err) {
-      toast.error('Failed to approve quality check');
-    }
-  };
-
-  const openRejectModal = (item) => {
+  const openDecideModal = (item, action) => {
     setSelectedItem(item);
-    setRemarks('');
-    setShowRejectModal(true);
+    setQcAction(action);
+    setRemarks(action === 'approve' ? 'Quality check passed. Item verified.' : '');
+    setShowDecideModal(true);
   };
 
-  const handleReject = async (e) => {
+  const handleLogDecision = async (e) => {
     e.preventDefault();
-    if (!remarks.trim()) {
+    if (qcAction === 'reject' && !remarks.trim()) {
       toast.error('Please enter discrepancy remarks for rejection');
       return;
     }
     setSubmitting(true);
     try {
+      const isApproved = qcAction === 'approve';
       await operationsAPI.updateInventoryItem(selectedItem._id, {
-        qualityStatus: 'rejected',
-        qcRemarks: remarks
+        qualityStatus: isApproved ? 'verified' : 'rejected',
+        qcRemarks: remarks.trim() || (isApproved ? 'Quality check passed. Item verified.' : 'Rejected.')
       });
-      toast.error(`QC Rejected: "${selectedItem.name}" has been flagged.`);
-      setShowRejectModal(false);
+      if (isApproved) {
+        toast.success(`QC Approved: "${selectedItem.name}" is now marked verified!`);
+      } else {
+        toast.error(`QC Rejected: "${selectedItem.name}" has been flagged.`);
+      }
+      setShowDecideModal(false);
       fetchQCRequests();
     } catch (err) {
-      toast.error('Failed to reject quality check');
+      toast.error('Failed to log quality check decision');
     } finally {
       setSubmitting(false);
     }
@@ -246,7 +239,7 @@ const QCInventoryRequests = () => {
                         <td>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button
-                              onClick={() => handleApprove(item)}
+                              onClick={() => openDecideModal(item, 'approve')}
                               title="Approve Quality (Verify)"
                               style={{
                                 background: 'rgba(34, 197, 94, 0.1)',
@@ -265,7 +258,7 @@ const QCInventoryRequests = () => {
                               <HiOutlineCheck /> Verify
                             </button>
                             <button
-                              onClick={() => openRejectModal(item)}
+                              onClick={() => openDecideModal(item, 'reject')}
                               title="Reject / Flag Issues"
                               style={{
                                 background: 'rgba(239, 68, 68, 0.1)',
@@ -310,44 +303,64 @@ const QCInventoryRequests = () => {
         )}
       </div>
 
-      {/* ===== REJECT / REMARKS MODAL ===== */}
-      {showRejectModal && selectedItem && (
-        <div onClick={(e) => e.target === e.currentTarget && setShowRejectModal(false)} style={{
+      {/* ===== QC DECISION MODAL ===== */}
+      {showDecideModal && selectedItem && (
+        <div onClick={(e) => e.target === e.currentTarget && setShowDecideModal(false)} style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'
         }}>
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '480px', animation: 'fadeInUp 0.3s ease' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <HiOutlineChatAlt2 style={{ color: 'var(--danger)' }} /> QC Rejection & Remarks
+                {qcAction === 'approve' ? (
+                  <>
+                    <HiOutlineCheck style={{ color: 'var(--success)' }} /> QC Verification & Approval
+                  </>
+                ) : (
+                  <>
+                    <HiOutlineChatAlt2 style={{ color: 'var(--danger)' }} /> QC Rejection & Remarks
+                  </>
+                )}
               </h3>
-              <button onClick={() => setShowRejectModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '1.4rem', cursor: 'pointer' }}><HiOutlineX /></button>
+              <button onClick={() => setShowDecideModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '1.4rem', cursor: 'pointer' }}><HiOutlineX /></button>
             </div>
 
-            <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Flagging: </span>
+            <div style={{
+              background: qcAction === 'approve' ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+              border: qcAction === 'approve' ? '1px solid rgba(34, 197, 94, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '20px'
+            }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>Auditing Item: </span>
               <strong style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>{selectedItem.name}</strong>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '4px' }}>Qty: {selectedItem.quantity} {selectedItem.unit} | Location: {selectedItem.location}</div>
             </div>
 
-            <form onSubmit={handleReject}>
+            <form onSubmit={handleLogDecision}>
               <div className="form-group">
-                <label className="form-label">Discrepancy / Damage Remarks *</label>
+                <label className="form-label">
+                  {qcAction === 'approve' ? 'Approval / Inspection Remarks' : 'Discrepancy / Damage Remarks *'}
+                </label>
                 <textarea
                   className="form-input"
-                  required
+                  required={qcAction === 'reject'}
                   rows="3"
                   value={remarks}
                   onChange={e => setRemarks(e.target.value)}
-                  placeholder="Specify why the item failed quality control checks (e.g. physical damage, missing count, incorrect gauge)..."
+                  placeholder={qcAction === 'approve' ? 'Specify verification details (e.g. physical dimensions verified, count is exact)...' : 'Specify why the item failed quality control checks (e.g. physical damage, missing count, incorrect gauge)...'}
                 ></textarea>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowRejectModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-danger" disabled={submitting}>
-                  {submitting ? 'Rejecting...' : 'Confirm QC Rejection'}
-                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDecideModal(false)}>Cancel</button>
+                {qcAction === 'approve' ? (
+                  <button type="submit" className="btn" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#ffffff', border: 'none' }} disabled={submitting}>
+                    {submitting ? 'Verifying...' : 'Confirm QC Verification'}
+                  </button>
+                ) : (
+                  <button type="submit" className="btn btn-danger" disabled={submitting}>
+                    {submitting ? 'Rejecting...' : 'Confirm QC Rejection'}
+                  </button>
+                )}
               </div>
             </form>
           </div>
