@@ -1407,3 +1407,152 @@ div[style*="bg-secondary"] {
   -webkit-backdrop-filter: blur(10px) !important;
 }
 
+/* ===== ADDITIONAL RESPONSIVE & LAYOUT OPTIMIZATIONS ===== */
+
+/* Prevent horizontal viewport scroll */
+body, html, #root, .dashboard-layout {
+  max-width: 100vw;
+  overflow-x: hidden !important;
+}
+
+/* Enable flex shrink on main content area */
+.main-content {
+  width: calc(100% - var(--sidebar-width)) !important;
+  min-width: 0 !important;
+}
+
+.dashboard-content {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure tables are scrollable and never cause layout breakages */
+.azure-table-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.azure-table {
+  width: 100% !important;
+}
+
+/* Mobile Overlay for Sidebar Drawer */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 14, 26, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 95;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+/* Mobile Menu Button default (hidden on desktop) */
+.mobile-menu-btn {
+  display: none;
+}
+
+/* Responsive Overrides */
+@media (max-width: 992px) {
+  /* Stack all inline grids to prevent horizontal layout compression */
+  div[style*="grid-template-columns" i] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Stack welcome section flex elements */
+  .welcome-section {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .top-navbar {
+    padding: 0 16px !important;
+  }
+
+  /* Show Hamburger Menu Toggle button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Hide profile text details in navbar, only show avatar */
+  .user-info {
+    display: none !important;
+  }
+  
+  .user-menu:hover {
+    background: transparent !important;
+  }
+
+  /* Adjust notification dropdown for mobile */
+  .notification-dropdown {
+    width: calc(100vw - 32px) !important;
+    right: -60px !important;
+    top: 52px !important;
+  }
+  
+  /* Profile dropdown placement adjust on mobile */
+  .profile-wrapper .notification-dropdown {
+    right: -16px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Hide verbose text labels in navbar */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Scale down selection controls on mobile */
+  .navbar-right select {
+    padding: 6px 8px !important;
+    font-size: 0.78rem !important;
+    max-width: 130px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-navbar {
+    padding: 0 10px !important;
+  }
+
+  /* Truncate long brand names on small screens to fit navbar */
+  .brand-name-text {
+    max-width: 110px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .navbar-left {
+    gap: 8px !important;
+  }
+  
+  .navbar-right {
+    gap: 8px !important;
+  }
+
+  /* Fix inputs that have static inline widths */
+  input[style*="width: 260px" i],
+  input[style*="width: 300px" i],
+  div[style*="width: 260px" i],
+  div[style*="width: 300px" i] {
+    width: 100% !important;
+  }
+}
+
+

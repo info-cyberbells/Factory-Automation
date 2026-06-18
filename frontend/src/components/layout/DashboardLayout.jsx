@@ -559,6 +559,13 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       <div className="main-content">
         <header className="top-navbar">
           <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+              className="mobile-menu-btn navbar-icon-btn" 
+              onClick={() => setIsMobileMenuOpen(true)}
+              style={{ display: 'none', marginRight: '4px' }}
+            >
+              <HiOutlineMenu />
+            </button>
             <div style={{
               width: '40px',
               height: '40px',
@@ -577,7 +584,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              <h1 className="brand-name-text" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 {settings?.brandName || 'TrackBells ERP'}
               </h1>
               <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600, lineHeight: 1.2, marginTop: '2px' }}>
@@ -588,7 +595,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
           <div className="navbar-right">
             {user?.role === 'super_admin' && !user?.organizationId && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Org:</span>
+                <span className="hide-on-mobile" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Org:</span>
                 <select
                   value={selectedOrgId}
                   onChange={handleOrgChange}

@@ -11,7 +11,7 @@ exports.getAllOrganizations = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const orgs = await Organization.find().sort({ createdAt: -1 });
-    
+
     // Attach the owner email to each org for display
     const orgsWithOwner = await Promise.all(orgs.map(async (org) => {
       const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true }).select('name email phone');
@@ -41,7 +41,7 @@ exports.approveOrganization = async (req, res, next) => {
     await org.save();
 
     const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
-    
+
     if (owner) {
       try {
         await sendEmail({
@@ -85,7 +85,7 @@ exports.declineOrganization = async (req, res, next) => {
     await org.save();
 
     const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
-    
+
     if (owner) {
       try {
         await sendEmail({
@@ -165,14 +165,14 @@ exports.forceReverify = async (req, res, next) => {
     await org.save();
 
     const owner = await User.findOne({ organizationId: org._id, isOrgOwner: true });
-    
+
     if (owner) {
       // Generate OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      
+
       // Delete existing OTPs for this email
       await OTP.deleteMany({ email: owner.email });
-      
+
       // Create new OTP
       await OTP.create({
         email: owner.email,
@@ -252,10 +252,10 @@ exports.resendReverifyOTP = async (req, res, next) => {
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Delete existing OTPs
     await OTP.deleteMany({ email: owner.email });
-    
+
     // Create new OTP
     await OTP.create({
       email: owner.email,
@@ -307,7 +307,7 @@ const defaultSettings = {
 exports.getOrgSettings = async (req, res, next) => {
   try {
     let orgId = req.user.organizationId;
-    
+
     // For Platform Super Admin who may not have organizationId
     if (!orgId && req.user.role === 'super_admin') {
       orgId = req.query.orgId || req.headers['x-org-id'];
@@ -318,19 +318,19 @@ exports.getOrgSettings = async (req, res, next) => {
         }
       }
     }
-    
+
     if (!orgId) {
       return res.status(200).json({ success: true, data: defaultSettings });
     }
-    
+
     const org = await Organization.findById(orgId);
     if (!org) {
       return res.status(404).json({ success: false, message: 'Organization not found' });
     }
-    
+
     let settings = org.settings || {};
     let needsSave = false;
-    
+
     if (!settings.brandName) { settings.brandName = defaultSettings.brandName; needsSave = true; }
     if (!settings.brandSubtitle) { settings.brandSubtitle = defaultSettings.brandSubtitle; needsSave = true; }
     if (!settings.logo) { settings.logo = defaultSettings.logo; needsSave = true; }
@@ -340,25 +340,20 @@ exports.getOrgSettings = async (req, res, next) => {
       settings.menus = defaultSettings.menus;
       needsSave = true;
     } else {
-      // Dynamic injection for existing organizations missing the optionalFeature menu
-      if (!settings.menus.some(m => m.key === 'optionalFeature')) {
-        settings.menus.push({
-          key: 'optionalFeature',
-          label: 'Optional Feature',
-          icon: 'HiOutlineLightningBolt',
-          path: '/optional-feature',
-          visible: true,
-          roles: ['super_admin', 'admin']
-        });
-        needsSave = true;
-      }
+      // Dynamic injection for existing organizations missing any default settings menus
+      defaultSettings.menus.forEach(defaultMenu => {
+        if (!settings.menus.some(m => m.key === defaultMenu.key)) {
+          settings.menus.push(defaultMenu);
+          needsSave = true;
+        }
+      });
     }
-    
+
     if (needsSave) {
       org.settings = settings;
       await org.save();
     }
-    
+
     res.status(200).json({ success: true, data: org.settings });
   } catch (error) {
     next(error);
@@ -371,22 +366,22 @@ exports.getOrgSettings = async (req, res, next) => {
 exports.updateOrgSettings = async (req, res, next) => {
   try {
     let orgId = req.user.organizationId;
-    
+
     if (!orgId && req.user.role === 'super_admin') {
       orgId = req.body.orgId || req.query.orgId || req.headers['x-org-id'];
     }
-    
+
     if (!orgId) {
       return res.status(400).json({ success: false, message: 'Organization ID is required' });
     }
-    
+
     const org = await Organization.findById(orgId);
     if (!org) {
       return res.status(404).json({ success: false, message: 'Organization not found' });
     }
-    
+
     const { brandName, brandSubtitle, logo, themeColor, footerText, menus } = req.body;
-    
+
     org.settings = {
       brandName: brandName || (org.settings && org.settings.brandName) || defaultSettings.brandName,
       brandSubtitle: brandSubtitle || (org.settings && org.settings.brandSubtitle) || defaultSettings.brandSubtitle,
@@ -395,9 +390,9 @@ exports.updateOrgSettings = async (req, res, next) => {
       footerText: footerText || (org.settings && org.settings.footerText) || defaultSettings.footerText,
       menus: menus || (org.settings && org.settings.menus) || defaultSettings.menus
     };
-    
+
     await org.save();
-    
+
     res.status(200).json({ success: true, data: org.settings });
   } catch (error) {
     next(error);
