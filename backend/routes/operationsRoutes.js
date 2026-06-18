@@ -51,7 +51,7 @@ router.use(protect);
 // Unified Inventory CRUD (Store Manager can edit, others can view/verify)
 router.route('/inventory')
   .get(getInventory)
-  .post(authorize('super_admin', 'admin', 'store_manager'), createInventoryItem);
+  .post(authorize('super_admin', 'admin', 'store_manager', 'supervisor'), createInventoryItem);
 
 router.route('/inventory/:id')
   .put(authorize('super_admin', 'admin', 'store_manager', 'sales', 'quality_checker'), updateInventoryItem)

@@ -285,7 +285,8 @@ const ModalOverlay = ({ children, onClose, title }) => (
   }}>
     <div style={{
       background: 'var(--bg-card)', border: '1px solid var(--border)',
-      borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '700px', animation: 'fadeInUp 0.3s ease'
+      borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '700px', animation: 'fadeInUp 0.3s ease',
+      maxHeight: '90vh', overflowY: 'auto'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1.3rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{title}</h3>
