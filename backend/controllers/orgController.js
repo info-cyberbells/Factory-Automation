@@ -294,8 +294,10 @@ const defaultSettings = {
     { key: 'storeManager', label: 'Store & Godown', icon: 'HiOutlineCube', path: '/store', visible: true, roles: ['super_admin', 'store_manager'] },
     { key: 'sales', label: 'Sales & Orders', icon: 'HiOutlineShoppingCart', path: '/sales', visible: true, roles: ['super_admin', 'sales'] },
     { key: 'users', label: 'User Management', icon: 'HiOutlineUsers', path: '/users', visible: true, roles: ['super_admin', 'admin'] },
+    { key: 'optionalFeature', label: 'Optional Feature', icon: 'HiOutlineLightningBolt', path: '/optional-feature', visible: true, roles: ['super_admin', 'admin'] },
     { key: 'organizations', label: 'SaaS Tenants', icon: 'HiOutlineOfficeBuilding', path: '/admin/organizations', visible: true, roles: ['super_admin'] },
-    { key: 'settings', label: 'Settings', icon: 'HiOutlineAdjustments', path: '/settings', visible: true, roles: ['super_admin', 'admin'] }
+    { key: 'settings', label: 'Settings', icon: 'HiOutlineAdjustments', path: '/settings', visible: true, roles: ['super_admin', 'admin'] },
+    { key: 'support', label: 'Help & Support', icon: 'HiOutlineDocumentReport', path: '/admin/support', visible: true, roles: ['super_admin'] }
   ]
 };
 
@@ -334,7 +336,23 @@ exports.getOrgSettings = async (req, res, next) => {
     if (!settings.logo) { settings.logo = defaultSettings.logo; needsSave = true; }
     if (!settings.themeColor) { settings.themeColor = defaultSettings.themeColor; needsSave = true; }
     if (!settings.footerText) { settings.footerText = defaultSettings.footerText; needsSave = true; }
-    if (!settings.menus || settings.menus.length === 0) { settings.menus = defaultSettings.menus; needsSave = true; }
+    if (!settings.menus || settings.menus.length === 0) {
+      settings.menus = defaultSettings.menus;
+      needsSave = true;
+    } else {
+      // Dynamic injection for existing organizations missing the optionalFeature menu
+      if (!settings.menus.some(m => m.key === 'optionalFeature')) {
+        settings.menus.push({
+          key: 'optionalFeature',
+          label: 'Optional Feature',
+          icon: 'HiOutlineLightningBolt',
+          path: '/optional-feature',
+          visible: true,
+          roles: ['super_admin', 'admin']
+        });
+        needsSave = true;
+      }
+    }
     
     if (needsSave) {
       org.settings = settings;

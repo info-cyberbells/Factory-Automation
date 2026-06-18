@@ -580,11 +580,9 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
               <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 {settings?.brandName || 'TrackBells ERP'}
               </h1>
-              {settings?.brandSubtitle && (
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 500, lineHeight: 1.2 }}>
-                  {settings.brandSubtitle}
-                </span>
-              )}
+              <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600, lineHeight: 1.2, marginTop: '2px' }}>
+                {pageTitle}
+              </span>
             </div>
           </div>
           <div className="navbar-right">
