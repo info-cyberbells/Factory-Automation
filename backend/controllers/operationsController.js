@@ -57,12 +57,18 @@ exports.updateInventoryItem = async (req, res, next) => {
     const oldItem = await InventoryItem.findById(req.params.id);
     if (!oldItem) return res.status(404).json({ success: false, message: 'Item not found' });
 
-    // Validate that approved quantity does not exceed original quantity
+    // Validate that approved quantity does not exceed original quantity and is an integer
     if (req.body.qualityStatus === 'verified' && typeof req.body.quantity === 'number') {
       if (req.body.quantity > oldItem.quantity) {
         return res.status(400).json({
           success: false,
           message: `Approved quantity (${req.body.quantity}) cannot exceed the original quantity (${oldItem.quantity})`
+        });
+      }
+      if (!Number.isInteger(req.body.quantity)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Approved quantity must be an integer (no decimals)'
         });
       }
     }

@@ -67,7 +67,7 @@ const QCInventoryRequests = () => {
     setSelectedItem(item);
     setQcAction(action);
     setRemarks(action === 'approve' ? 'Quality check passed. Item verified.' : '');
-    setApprovedQuantity(item.quantity);
+    setApprovedQuantity(Math.floor(item.quantity));
     setApprovedUnit(item.unit || 'kg');
     setShowDecideModal(true);
   };
@@ -83,6 +83,10 @@ const QCInventoryRequests = () => {
       const appQty = Number(approvedQuantity);
       if (isNaN(appQty) || appQty <= 0) {
         toast.error('Please specify a valid approved product quantity');
+        return;
+      }
+      if (!Number.isInteger(appQty)) {
+        toast.error('Approved product quantity must be a whole number (no decimals)');
         return;
       }
       if (appQty > selectedItem.quantity) {
@@ -367,12 +371,28 @@ const QCInventoryRequests = () => {
                     <label className="form-label">Approved Product Quantity *</label>
                     <input
                       type="number"
-                      step="0.01"
-                      min="0.01"
+                      step="1"
+                      min="1"
+                      max={Math.floor(selectedItem.quantity)}
                       className="form-input"
                       required
                       value={approvedQuantity}
-                      onChange={e => setApprovedQuantity(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setApprovedQuantity('');
+                          return;
+                        }
+                        let num = Math.floor(Number(val));
+                        if (num < 1) num = 1;
+                        if (num > selectedItem.quantity) num = Math.floor(selectedItem.quantity);
+                        setApprovedQuantity(num);
+                      }}
+                      onKeyPress={e => {
+                        if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E') {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder="Enter approved amount"
                     />
                   </div>
