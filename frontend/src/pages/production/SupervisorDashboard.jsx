@@ -3,7 +3,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { gateEntryAPI, operationsAPI } from '../../services/api';
 import {
   HiOutlineCheckCircle, HiOutlineCog, HiOutlineAdjustments, HiOutlinePlus,
-  HiOutlinePlay, HiOutlineArrowCircleRight, HiOutlineX, HiOutlineTrash
+  HiOutlinePlay, HiOutlineArrowCircleRight, HiOutlineX, HiOutlineTrash,
+  HiOutlineCube
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
@@ -35,6 +36,19 @@ const SupervisorDashboard = () => {
   const [showGateVerifyModal, setShowGateVerifyModal] = useState(false);
   const [selectedGateEntryId, setSelectedGateEntryId] = useState(null);
   const [verificationRemarks, setVerificationRemarks] = useState('');
+
+  // Add Items Modal for Supervisor
+  const [showAddItemsModal, setShowAddItemsModal] = useState(false);
+  const [selectedEntryForItems, setSelectedEntryForItems] = useState(null);
+  const [itemsForm, setItemsForm] = useState({
+    name: '',
+    type: 'raw_material',
+    quantity: '',
+    unit: '',
+    location: 'Unassigned',
+    size: '',
+    description: ''
+  });
 
   // Predefined Belt Machinery
   const PREDEFINED_MACHINES = [
@@ -139,6 +153,46 @@ const SupervisorDashboard = () => {
       fetchData();
     } catch (err) {
       toast.error('Failed to approve Gate Entry');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openAddItemsModal = (entry) => {
+    setSelectedEntryForItems(entry);
+    setItemsForm({
+      name: entry.materialType ? entry.materialType.charAt(0).toUpperCase() + entry.materialType.slice(1) : '',
+      type: 'raw_material',
+      quantity: entry.quantity,
+      unit: entry.unit || 'kg',
+      location: 'Unassigned',
+      size: '',
+      description: entry.materialDescription || ''
+    });
+    setShowAddItemsModal(true);
+  };
+
+  const handleSaveAndVerify = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await operationsAPI.createInventoryItem({
+        name: itemsForm.name,
+        type: itemsForm.type,
+        quantity: Number(itemsForm.quantity),
+        unit: itemsForm.unit,
+        location: itemsForm.location,
+        size: itemsForm.size,
+        description: itemsForm.description
+      });
+
+      await gateEntryAPI.verify(selectedEntryForItems._id);
+
+      toast.success('Inventory item created and Gate Entry verified successfully!');
+      setShowAddItemsModal(false);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Operation failed');
     } finally {
       setSubmitting(false);
     }
@@ -507,9 +561,14 @@ const SupervisorDashboard = () => {
                       </td>
                       <td>
                         {entry.status === 'pending' ? (
-                          <button className="btn btn-accent btn-sm" onClick={() => handleOpenGateVerify(entry._id)}>
-                            <HiOutlineCheckCircle /> Verify & Approve
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
+                            <button className="btn btn-accent btn-sm" style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)', borderColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => openAddItemsModal(entry)}>
+                              <HiOutlineCube /> Add Items & Verify
+                            </button>
+                            <button className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }} onClick={() => handleOpenGateVerify(entry._id)}>
+                              <HiOutlineCheckCircle /> Verify Only
+                            </button>
+                          </div>
                         ) : (
                           <span className={`azure-badge ${
                             entry.status === 'verified' ? 'running' :
@@ -980,6 +1039,82 @@ const SupervisorDashboard = () => {
               Please select a pending build order above to configure details.
             </div>
           )}
+        </ModalOverlay>
+      )}
+
+      {/* ===== ADD ITEMS & VERIFY MODAL (SUPERVISOR) ===== */}
+      {showAddItemsModal && selectedEntryForItems && (
+        <ModalOverlay onClose={() => setShowAddItemsModal(false)} title="Add Items & Verify Gate Entry">
+          <div style={{
+            background: 'var(--primary-glow)', border: '1px solid var(--border-primary)',
+            borderRadius: '12px', padding: '16px', marginBottom: '20px'
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
+              <div><span style={{ color: 'var(--text-dim)' }}>Bill No:</span> <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{selectedEntryForItems.billNumber}</span></div>
+              <div><span style={{ color: 'var(--text-dim)' }}>Vendor:</span> <span style={{ color: 'var(--text-primary)' }}>{selectedEntryForItems.vendorName}</span></div>
+              <div><span style={{ color: 'var(--text-dim)' }}>Original Material:</span> <span style={{ color: 'var(--accent)', textTransform: 'capitalize' }}>{selectedEntryForItems.materialType}</span></div>
+              <div><span style={{ color: 'var(--text-dim)' }}>Original Qty:</span> <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedEntryForItems.quantity} {selectedEntryForItems.unit}</span></div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveAndVerify}>
+            <div className="form-group">
+              <label className="form-label">Item / Material Name *</label>
+              <input className="form-input" required value={itemsForm.name}
+                onChange={(e) => setItemsForm({ ...itemsForm, name: e.target.value })} placeholder="e.g., Nylon Drag Chain" />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label className="form-label">Item Type *</label>
+                <select className="form-input" value={itemsForm.type}
+                  onChange={(e) => setItemsForm({ ...itemsForm, type: e.target.value })}
+                  style={{ cursor: 'pointer' }}>
+                  <option value="raw_material">Raw Material</option>
+                  <option value="finished_good">Finished Good</option>
+                  <option value="hardware">Hardware / Tools</option>
+                  <option value="custom">Custom Tooling</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Stock Unit *</label>
+                <input className="form-input" required value={itemsForm.unit}
+                  onChange={(e) => setItemsForm({ ...itemsForm, unit: e.target.value })} placeholder="e.g., kg, pcs" />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label className="form-label">Stock Quantity *</label>
+                <input className="form-input" type="number" step="0.01" min="0.01" required value={itemsForm.quantity}
+                  onChange={(e) => setItemsForm({ ...itemsForm, quantity: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Warehouse Location</label>
+                <input className="form-input" value={itemsForm.location}
+                  onChange={(e) => setItemsForm({ ...itemsForm, location: e.target.value })} placeholder="e.g., Row A - Rack 2" />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Size / Gauge Specifications</label>
+              <input className="form-input" value={itemsForm.size}
+                onChange={(e) => setItemsForm({ ...itemsForm, size: e.target.value })} placeholder="e.g., 35mm x 100mm" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Item Specs / Description</label>
+              <textarea className="form-input" rows="2" value={itemsForm.description}
+                onChange={(e) => setItemsForm({ ...itemsForm, description: e.target.value })} placeholder="Specifications..."></textarea>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowAddItemsModal(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>
+                {submitting ? 'Saving & Verifying...' : 'Save & Verify'}
+              </button>
+            </div>
+          </form>
         </ModalOverlay>
       )}
     </DashboardLayout>

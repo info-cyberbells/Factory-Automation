@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminOrgAPI } from '../../services/api';
-import { HiOutlineOfficeBuilding, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlinePlus, HiOutlineShieldCheck } from 'react-icons/hi';
+import { HiOutlineOfficeBuilding, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlinePlus, HiOutlineShieldCheck, HiEye, HiEyeOff } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 const OrganizationManagement = () => {
@@ -20,6 +20,7 @@ const OrganizationManagement = () => {
     adminName: '', adminEmail: '', adminPhone: '', adminPassword: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchOrganizations();
@@ -228,7 +229,38 @@ const OrganizationManagement = () => {
                 <input className="form-input" placeholder="Admin Name *" required value={createForm.adminName} onChange={e => setCreateForm({...createForm, adminName: e.target.value})} />
                 <input className="form-input" type="email" placeholder="Admin Email *" required value={createForm.adminEmail} onChange={e => setCreateForm({...createForm, adminEmail: e.target.value})} />
                 <input className="form-input" placeholder="Admin Phone" value={createForm.adminPhone} onChange={e => setCreateForm({...createForm, adminPhone: e.target.value})} />
-                <input className="form-input" type="password" placeholder="Password *" required minLength={6} value={createForm.adminPassword} onChange={e => setCreateForm({...createForm, adminPassword: e.target.value})} />
+                <div className="form-input-icon" style={{ position: 'relative' }}>
+                  <input
+                    className="form-input"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Password *"
+                    required
+                    minLength={6}
+                    value={createForm.adminPassword}
+                    onChange={e => setCreateForm({...createForm, adminPassword: e.target.value})}
+                    style={{ paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-dim)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      zIndex: 10
+                    }}
+                  >
+                    {showPassword ? <HiEyeOff /> : <HiEye />}
+                  </button>
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>

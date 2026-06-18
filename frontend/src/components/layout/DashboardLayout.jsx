@@ -357,6 +357,9 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
         return user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL;
       }
 
+      // Hard safeguard: Gate operations is never visible to quality checkers
+      if (item.key === 'gateGuard' && user?.role === 'quality_checker') return false;
+
       // 2. Role access check
       if (item.roles && item.roles.length > 0) {
         // Platform admin gets access to everything

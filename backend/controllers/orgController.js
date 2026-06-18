@@ -348,6 +348,18 @@ exports.getOrgSettings = async (req, res, next) => {
           needsSave = true;
         }
       });
+
+      // Sanitize gateGuard roles to ensure it is not shown to unauthorized roles like quality_checker
+      const gateGuardMenu = settings.menus.find(m => m.key === 'gateGuard');
+      if (gateGuardMenu) {
+        const allowedRoles = ['super_admin', 'admin', 'gate_guard'];
+        const currentRoles = gateGuardMenu.roles || [];
+        const cleanRoles = currentRoles.filter(r => allowedRoles.includes(r));
+        if (cleanRoles.length !== currentRoles.length) {
+          gateGuardMenu.roles = cleanRoles;
+          needsSave = true;
+        }
+      }
     }
 
     if (needsSave) {

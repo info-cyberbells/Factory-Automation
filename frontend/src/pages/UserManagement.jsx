@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineSearch,
   HiOutlineX, HiOutlineRefresh, HiOutlineUsers, HiOutlineShieldCheck,
-  HiOutlineBan
+  HiOutlineBan, HiEye, HiEyeOff
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -60,6 +60,7 @@ const UserManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Role change modal
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -449,10 +450,38 @@ const UserManagement = () => {
                   <input className="form-input" type="email" placeholder="Enter email" value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
+                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Password *</label>
-                  <input className="form-input" type="password" placeholder="Min 6 chars" value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                  <div className="form-input-icon" style={{ position: 'relative' }}>
+                    <input
+                      className="form-input"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Min 6 chars"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      style={{ paddingRight: '40px' }}
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-dim)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        zIndex: 10
+                      }}
+                    >
+                      {showPassword ? <HiEyeOff /> : <HiEye />}
+                    </button>
+                  </div>
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Phone</label>
