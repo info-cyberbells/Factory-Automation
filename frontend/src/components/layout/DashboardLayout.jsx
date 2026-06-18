@@ -374,7 +374,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       if (['dashboard', 'users'].includes(item.key)) sectionName = 'Enterprise';
       else if (item.key === 'gateGuard') sectionName = 'Gate Log';
       else if (item.key === 'supervisor') sectionName = 'Production';
-      else if (item.key === 'qualityChecker') sectionName = 'QC Inspection';
+      else if (['qualityChecker', 'qcInventoryRequests'].includes(item.key)) sectionName = 'QC Inspection';
       else if (item.key === 'storeManager') sectionName = 'Store Operations';
       else if (item.key === 'sales') sectionName = 'Sales Log';
       else if (['organizations', 'settings'].includes(item.key)) sectionName = 'Platform';
