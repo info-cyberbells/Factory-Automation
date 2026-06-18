@@ -16,9 +16,9 @@ exports.getAllUsers = async (req, res, next) => {
     const filter = {};
     
     // Tenant Isolation
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       filter.organizationId = req.user.organizationId;
-      filter.email = { $ne: 'aman.cyberbells@gmail.com' };
+      filter.email = { $ne: process.env.PLATFORM_ADMIN_EMAIL };
     }
 
     if (search) {
@@ -137,7 +137,7 @@ exports.deleteUser = async (req, res, next) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     // Only Platform Admin can delete other Super Admins (Org Admins)
-    if (user.role === 'super_admin' && req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (user.role === 'super_admin' && req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(400).json({ success: false, message: 'Cannot delete organization admin' });
     }
 
@@ -217,7 +217,7 @@ exports.updateUser = async (req, res, next) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     // Platform admin can edit anyone. Org admin can edit non-super-admins.
-    if (user.role === 'super_admin' && req.user.email !== 'aman.cyberbells@gmail.com' && req.user._id.toString() !== user._id.toString()) {
+    if (user.role === 'super_admin' && req.user.email !== process.env.PLATFORM_ADMIN_EMAIL && req.user._id.toString() !== user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Not authorized to edit this user' });
     }
 
@@ -239,10 +239,10 @@ exports.updateUser = async (req, res, next) => {
 // @access  Private (super_admin, admin)
 exports.getAdminStats = async (req, res, next) => {
   try {
-    const filter = { email: { $ne: 'aman.cyberbells@gmail.com' } };
+    const filter = { email: { $ne: process.env.PLATFORM_ADMIN_EMAIL } };
 
     // Tenant Isolation
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       filter.organizationId = req.user.organizationId;
     }
 
@@ -275,7 +275,7 @@ exports.getAdminStats = async (req, res, next) => {
 // @access  Private (super_admin only)
 exports.getSuperAdminStats = async (req, res, next) => {
   try {
-    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.role !== 'super_admin' || req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
 

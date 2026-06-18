@@ -7,7 +7,7 @@ const { sendEmail } = require('../utils/sendEmail');
 // @access  Private/SuperAdmin
 exports.getAllOrganizations = async (req, res, next) => {
   try {
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const orgs = await Organization.find().sort({ createdAt: -1 });
@@ -29,7 +29,7 @@ exports.getAllOrganizations = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.approveOrganization = async (req, res, next) => {
   try {
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const org = await Organization.findById(req.params.id);
@@ -70,7 +70,7 @@ exports.approveOrganization = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.declineOrganization = async (req, res, next) => {
   try {
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const { remark } = req.body;
@@ -111,7 +111,7 @@ exports.declineOrganization = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.createOrganization = async (req, res, next) => {
   try {
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const { name, industry, address, adminName, adminEmail, adminPhone, adminPassword } = req.body;
@@ -155,7 +155,7 @@ const OTP = require('../models/OTP');
 // @access  Private/SuperAdmin (Main Platform Admin)
 exports.forceReverify = async (req, res, next) => {
   try {
-    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
     const org = await Organization.findById(req.params.id);

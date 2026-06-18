@@ -24,7 +24,7 @@ exports.createTicket = async (req, res) => {
     });
 
     // Send email to Super Admin
-    const superAdminEmail = process.env.SMTP_EMAIL || 'aman.cyberbells@gmail.com';
+    const superAdminEmail = process.env.PLATFORM_ADMIN_EMAIL || process.env.SMTP_EMAIL;
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -101,7 +101,7 @@ exports.createTicket = async (req, res) => {
 exports.getTickets = async (req, res) => {
   try {
     // Only allow platform admin
-    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.role !== 'super_admin' || req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Platform Admin privileges required.'
@@ -130,7 +130,7 @@ exports.getTickets = async (req, res) => {
 exports.replyTicket = async (req, res) => {
   try {
     // Only allow platform admin
-    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
+    if (req.user.role !== 'super_admin' || req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Platform Admin privileges required.'

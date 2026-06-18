@@ -29,10 +29,10 @@ const seedSuperAdmin = async () => {
     // Create super admin
     const superAdmin = await User.create({
       name: 'Super Admin',
-      email: 'aman.cyberbells@gmail.com',
-      password: '112233',
+      email: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@example.com',
+      password: process.env.SEED_SUPERADMIN_PASSWORD || 'password123',
       role: 'super_admin',
-      phone: '9999999999',
+      phone: process.env.SEED_SUPERADMIN_PHONE || '0000000000',
       department: 'Management',
       isActive: true,
       organizationId: defaultOrg._id,
@@ -43,7 +43,7 @@ const seedSuperAdmin = async () => {
     console.log('  SUPER ADMIN CREATED SUCCESSFULLY!');
     console.log('========================================');
     console.log(`  Email:    ${superAdmin.email}`);
-    console.log(`  Password: SuperAdmin@2026`);
+    console.log(`  Password: [Configured in Environment Variables]`);
     console.log(`  Role:     ${superAdmin.role}`);
     console.log('========================================');
     console.log('  ⚠️  Change the password after first login!');

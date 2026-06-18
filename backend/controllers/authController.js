@@ -215,7 +215,7 @@ exports.verifyAndCreateOrg = async (req, res, next) => {
     try {
       const { sendEmail } = require('../utils/sendEmail');
       await sendEmail({
-        to: 'aman.cyberbells@gmail.com',
+        to: process.env.PLATFORM_ADMIN_EMAIL,
         subject: 'New Organization Registration - Action Required',
         html: `<h2>New Organization Requires Approval</h2>
                <p>A new factory/workspace has registered and is waiting for your approval.</p>

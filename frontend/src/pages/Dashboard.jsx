@@ -21,7 +21,7 @@ const Dashboard = () => {
   // Render dashboard based on role
   switch (user.role) {
     case 'super_admin':
-      if (user.email === 'aman.cyberbells@gmail.com') {
+      if (user.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL) {
         return <SuperAdminDashboard />;
       }
       return <AdminTrackerDashboard />;

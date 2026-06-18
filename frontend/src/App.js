@@ -79,7 +79,7 @@ const RoleRoute = ({ children, roles = [], permission }) => {
   
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const isPlatformAdmin = user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com';
+  const isPlatformAdmin = user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL;
   
   // Platform-only routes check (prevent non-platform admins from accessing them)
   const platformRoutes = ['/admin/organizations', '/admin/support'];

@@ -291,7 +291,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   }
 
   // Always ensure support menu is present in the list for platform admin
-  if (user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com' && !rawMenus.some(m => m.key === 'support')) {
+  if (user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL && !rawMenus.some(m => m.key === 'support')) {
     rawMenus.push({
       key: 'support',
       label: 'Help & Support',
@@ -309,13 +309,13 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       
       // Platform-level menus only visible to platform admin
       if (['organizations', 'support'].includes(item.key)) {
-        return user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com';
+        return user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL;
       }
 
       // 2. Role access check
       if (item.roles && item.roles.length > 0) {
         // Platform admin gets access to everything
-        if (user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com') return true;
+        if (user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL) return true;
         return item.roles.includes(user?.role);
       }
       return true;
@@ -353,7 +353,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
 
   let roleLabel = ROLE_LABELS[user?.role] || 'User';
   if (user?.role === 'super_admin') {
-    roleLabel = user.email === 'aman.cyberbells@gmail.com' ? 'Platform Admin' : 'Organisation Admin';
+    roleLabel = user.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL ? 'Platform Admin' : 'Organisation Admin';
   }
   const roleColor = ROLE_COLORS[user?.role] || '#8892b0';
 

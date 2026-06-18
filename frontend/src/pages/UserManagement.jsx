@@ -307,7 +307,7 @@ const UserManagement = () => {
                 let displayEmoji = roleInfo.emoji;
 
                 if (u.role === 'super_admin') {
-                  if (u.email === 'aman.cyberbells@gmail.com') {
+                  if (u.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL) {
                     displayLabel = 'Platform Admin';
                     displayColor = '#3b82f6'; // Blue
                     displayEmoji = '👑';
@@ -372,7 +372,7 @@ const UserManagement = () => {
                             onClick={() => handleToggleStatus(u._id)} />
                           {(
                             (currentUser?.role === 'super_admin' && u.role !== 'super_admin') ||
-                            (currentUser?.email === 'aman.cyberbells@gmail.com')
+                            (currentUser?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL)
                           ) && (
                             <ActionBtn icon={<HiOutlineTrash />} title="Delete" color="#ef4444"
                               onClick={() => handleDelete(u._id)} />
