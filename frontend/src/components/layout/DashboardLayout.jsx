@@ -6,6 +6,7 @@ import { useOrg } from '../../context/OrgContext';
 import { notificationAPI, adminOrgAPI, authAPI, uploadAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
+import { compressImage } from '../../services/compress';
 import {
   HiOutlineHome, HiOutlineTruck, HiOutlineCog, HiOutlineClipboardCheck,
   HiOutlineCube, HiOutlineShoppingCart, HiOutlineChartBar, HiOutlineLightningBolt,
@@ -148,10 +149,11 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     if (!file) return;
 
     setUploadingProfile(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      const compressedFile = await compressImage(file);
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+
       const uploadRes = await uploadAPI.uploadFile(formData);
       if (uploadRes.data && uploadRes.data.success) {
         const fileUrl = uploadRes.data.fileUrl;

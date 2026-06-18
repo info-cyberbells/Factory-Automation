@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useOrg } from '../../context/OrgContext';
 import { uploadAPI } from '../../services/api';
+import { compressImage } from '../../services/compress';
 import toast from 'react-hot-toast';
 
 const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
@@ -55,8 +56,9 @@ const OptionalFeature = () => {
     try {
       if (logoFile) {
         setUploading(true);
+        const compressedFile = await compressImage(logoFile);
         const formData = new FormData();
-        formData.append('file', logoFile);
+        formData.append('file', compressedFile);
         
         const uploadRes = await uploadAPI.uploadFile(formData);
         if (uploadRes.data && uploadRes.data.success) {
