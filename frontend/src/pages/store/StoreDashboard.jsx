@@ -137,6 +137,19 @@ const StoreDashboard = () => {
     }
   };
 
+  const handleSendForQC = async (item) => {
+    try {
+      await operationsAPI.updateInventoryItem(item._id, {
+        qualityStatus: 'sent_for_qc',
+        qcRequestedAt: new Date()
+      });
+      toast.success(`Sent "${item.name}" for Quality Control Check!`);
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to send for quality check');
+    }
+  };
+
   // QC Log CRUD (Store Manager full access)
   const handleSaveQcLog = async (e) => {
     e.preventDefault();
@@ -369,9 +382,45 @@ const StoreDashboard = () => {
                     <td style={{ color: 'var(--accent-light)', fontWeight: 600 }}>{item.location}</td>
                     <td style={{ fontSize: '0.85rem' }}>{item.size || 'N/A'}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <button style={{ color: 'var(--primary-light)', background: 'none' }} onClick={() => handleEditItem(item)}>Edit</button>
-                        <button style={{ color: 'var(--danger)', background: 'none' }} onClick={() => handleDeleteItem(item._id)}>Delete</button>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button style={{ color: 'var(--primary-light)', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => handleEditItem(item)}>Edit</button>
+                        <button style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => handleDeleteItem(item._id)}>Delete</button>
+                        
+                        {/* Quality Check Request Action */}
+                        {(!item.qualityStatus || item.qualityStatus === 'pending') && (
+                          <button 
+                            style={{ 
+                              color: 'var(--accent)', 
+                              background: 'rgba(249, 115, 22, 0.1)', 
+                              padding: '2px 8px', 
+                              borderRadius: '6px', 
+                              border: '1px solid var(--border-primary)',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }} 
+                            onClick={() => handleSendForQC(item)}
+                          >
+                            <HiOutlineClipboardCheck /> QC Check
+                          </button>
+                        )}
+                        {item.qualityStatus === 'sent_for_qc' && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--warning)', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
+                            🔍 QC Sent
+                          </span>
+                        )}
+                        {item.qualityStatus === 'verified' && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--success)', background: 'rgba(34, 197, 94, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                            ✅ QC Verified
+                          </span>
+                        )}
+                        {item.qualityStatus === 'rejected' && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.2)' }} title={item.qcRemarks || 'No remarks'}>
+                            ❌ QC Rejected
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

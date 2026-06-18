@@ -33,6 +33,7 @@ import SalesDashboard from './pages/sales/SalesDashboard';
 import AdminTrackerDashboard from './pages/admin/AdminTrackerDashboard';
 import SupportDashboard from './pages/admin/SupportDashboard';
 import OptionalFeature from './pages/admin/OptionalFeature';
+import QCInventoryRequests from './pages/quality/QCInventoryRequests';
 
 // Protected Route - requires auth
 const ProtectedRoute = ({ children }) => {
@@ -161,6 +162,9 @@ function App() {
             } />
             <Route path="/quality" element={
               <RoleRoute roles={['super_admin', 'admin', 'quality_checker']}><QualityDashboard /></RoleRoute>
+            } />
+            <Route path="/quality-requests" element={
+              <RoleRoute roles={['super_admin', 'admin', 'quality_checker']}><QCInventoryRequests /></RoleRoute>
             } />
             <Route path="/store" element={
               <RoleRoute roles={['super_admin', 'admin', 'store_manager']}><StoreDashboard /></RoleRoute>

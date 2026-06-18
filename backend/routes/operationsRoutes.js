@@ -54,7 +54,7 @@ router.route('/inventory')
   .post(authorize('super_admin', 'admin', 'store_manager'), createInventoryItem);
 
 router.route('/inventory/:id')
-  .put(authorize('super_admin', 'admin', 'store_manager', 'sales'), updateInventoryItem)
+  .put(authorize('super_admin', 'admin', 'store_manager', 'sales', 'quality_checker'), updateInventoryItem)
   .delete(authorize('super_admin', 'admin', 'store_manager'), deleteInventoryItem);
 
 // Machine CRUD (Supervisor/Admins can edit)

@@ -12,7 +12,7 @@ import {
   HiOutlineCube, HiOutlineShoppingCart, HiOutlineChartBar, HiOutlineLightningBolt,
   HiOutlineBell, HiOutlineLogout, HiOutlineAdjustments, HiOutlineUsers,
   HiOutlineDocumentReport, HiOutlineUserGroup, HiOutlineMenu, HiOutlineOfficeBuilding,
-  HiOutlineSun, HiOutlineMoon
+  HiOutlineSun, HiOutlineMoon, HiOutlineClipboardList
 } from 'react-icons/hi';
 
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
@@ -98,7 +98,8 @@ const ICON_MAP = {
   HiOutlineDocumentReport: <HiOutlineDocumentReport />,
   HiOutlineUserGroup: <HiOutlineUserGroup />,
   HiOutlineMenu: <HiOutlineMenu />,
-  HiOutlineOfficeBuilding: <HiOutlineOfficeBuilding />
+  HiOutlineOfficeBuilding: <HiOutlineOfficeBuilding />,
+  HiOutlineClipboardList: <HiOutlineClipboardList />
 };
 
 const ROLE_LABELS = {
@@ -182,7 +183,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
 
   useEffect(() => {
     const fetchOrgs = async () => {
-      if (user?.role === 'super_admin' && !user?.organizationId) {
+      if (user?.role === 'super_admin') {
         try {
           const res = await adminOrgAPI.getAll();
           setOrgs(res.data.data || []);
@@ -593,7 +594,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             </div>
           </div>
           <div className="navbar-right">
-            {user?.role === 'super_admin' && !user?.organizationId && (
+            {user?.role === 'super_admin' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px' }}>
                 <span className="hide-on-mobile" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Org:</span>
                 <select

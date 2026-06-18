@@ -35,6 +35,18 @@ const InventoryItemSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
+  },
+  qualityStatus: {
+    type: String,
+    enum: ['pending', 'sent_for_qc', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  qcRemarks: {
+    type: String,
+    trim: true
+  },
+  qcRequestedAt: {
+    type: Date
   }
 }, {
   timestamps: true
