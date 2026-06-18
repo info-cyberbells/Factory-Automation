@@ -275,8 +275,8 @@ exports.getAdminStats = async (req, res, next) => {
 // @access  Private (super_admin only)
 exports.getSuperAdminStats = async (req, res, next) => {
   try {
-    if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ success: false, message: 'Access denied. Super admin only.' });
+    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
     }
 
     const [

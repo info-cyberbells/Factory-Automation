@@ -290,8 +290,8 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     }
   }
 
-  // Always ensure support menu is present in the list for super_admin
-  if (user?.role === 'super_admin' && !rawMenus.some(m => m.key === 'support')) {
+  // Always ensure support menu is present in the list for platform admin
+  if (user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com' && !rawMenus.some(m => m.key === 'support')) {
     rawMenus.push({
       key: 'support',
       label: 'Help & Support',
@@ -306,6 +306,12 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     .filter(item => {
       // 1. Must be marked visible globally
       if (!item.visible) return false;
+      
+      // Platform-level menus only visible to platform admin
+      if (['organizations', 'support'].includes(item.key)) {
+        return user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com';
+      }
+
       // 2. Role access check
       if (item.roles && item.roles.length > 0) {
         // Platform admin gets access to everything

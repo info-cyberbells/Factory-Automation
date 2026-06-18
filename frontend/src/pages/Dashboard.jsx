@@ -21,7 +21,10 @@ const Dashboard = () => {
   // Render dashboard based on role
   switch (user.role) {
     case 'super_admin':
-      return <SuperAdminDashboard />;
+      if (user.email === 'aman.cyberbells@gmail.com') {
+        return <SuperAdminDashboard />;
+      }
+      return <AdminTrackerDashboard />;
     case 'admin':
       return <AdminTrackerDashboard />;
     case 'gate_guard':

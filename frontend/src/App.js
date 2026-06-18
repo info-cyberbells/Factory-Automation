@@ -80,6 +80,14 @@ const RoleRoute = ({ children, roles = [], permission }) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const isPlatformAdmin = user?.role === 'super_admin' && user?.email === 'aman.cyberbells@gmail.com';
+  
+  // Platform-only routes check (prevent non-platform admins from accessing them)
+  const platformRoutes = ['/admin/organizations', '/admin/support'];
+  if (platformRoutes.includes(location.pathname)) {
+    if (isPlatformAdmin) return children;
+    return <Navigate to="/dashboard" replace />;
+  }
+
   if (isPlatformAdmin) return children;
 
   // Dynamic Settings Menu Visibility Check

@@ -7,6 +7,9 @@ const { sendEmail } = require('../utils/sendEmail');
 // @access  Private/SuperAdmin
 exports.getAllOrganizations = async (req, res, next) => {
   try {
+    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
+    }
     const orgs = await Organization.find().sort({ createdAt: -1 });
     
     // Attach the owner email to each org for display
@@ -26,6 +29,9 @@ exports.getAllOrganizations = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.approveOrganization = async (req, res, next) => {
   try {
+    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
+    }
     const org = await Organization.findById(req.params.id);
     if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
 
@@ -64,6 +70,9 @@ exports.approveOrganization = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.declineOrganization = async (req, res, next) => {
   try {
+    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
+    }
     const { remark } = req.body;
     if (!remark) return res.status(400).json({ success: false, message: 'Remark is required for declining' });
 
@@ -102,6 +111,9 @@ exports.declineOrganization = async (req, res, next) => {
 // @access  Private/SuperAdmin
 exports.createOrganization = async (req, res, next) => {
   try {
+    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
+    }
     const { name, industry, address, adminName, adminEmail, adminPhone, adminPassword } = req.body;
 
     // Check if email already in use
@@ -143,6 +155,9 @@ const OTP = require('../models/OTP');
 // @access  Private/SuperAdmin (Main Platform Admin)
 exports.forceReverify = async (req, res, next) => {
   try {
+    if (req.user.email !== 'aman.cyberbells@gmail.com') {
+      return res.status(403).json({ success: false, message: 'Access denied. Platform Admin only.' });
+    }
     const org = await Organization.findById(req.params.id);
     if (!org) return res.status(404).json({ success: false, message: 'Organization not found' });
 

@@ -100,11 +100,11 @@ exports.createTicket = async (req, res) => {
 // @access  Private (Super Admin / Admin)
 exports.getTickets = async (req, res) => {
   try {
-    // Only allow super_admin or admin
-    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
+    // Only allow platform admin
+    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Super Admin privileges required.'
+        message: 'Access denied. Platform Admin privileges required.'
       });
     }
 
@@ -129,11 +129,11 @@ exports.getTickets = async (req, res) => {
 // @access  Private (Super Admin / Admin)
 exports.replyTicket = async (req, res) => {
   try {
-    // Only allow super_admin or admin
-    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
+    // Only allow platform admin
+    if (req.user.role !== 'super_admin' || req.user.email !== 'aman.cyberbells@gmail.com') {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Super Admin privileges required.'
+        message: 'Access denied. Platform Admin privileges required.'
       });
     }
 
