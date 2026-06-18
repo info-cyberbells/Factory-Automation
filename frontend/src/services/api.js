@@ -1,14 +1,7 @@
 import axios from 'axios';
 
-const getBaseURL = () => {
-  let url = process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin);
-  if (url.endsWith('/api')) return url;
-  if (url.endsWith('/api/')) return url.slice(0, -1);
-  return `${url.replace(/\/$/, '')}/api`;
-};
-
 const API = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: `${process.env.REACT_APP_API_URL || (window.location.port ? `${window.location.protocol}//${window.location.hostname}:9898` : window.location.origin)}/api`,
   headers: {
     'Content-Type': 'application/json'
   }
