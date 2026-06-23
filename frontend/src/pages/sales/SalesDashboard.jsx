@@ -256,8 +256,8 @@ const SalesDashboard = () => {
 
         /* SHORTAGES BUY LOGS */
         <div className="azure-card" style={{ padding: '24px' }}>
-          <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontSize: '1.1rem' }}>Active Purchase & Shortages Log</h3>
-          {sbsLogs.filter(j => ['shortage', 'buy'].includes(j.type)).length === 0 ? <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px' }}>No active shortages or buy requests logged.</p> : (
+          <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)', fontSize: '1.1rem' }}>Active Purchase, Sales & Shortages Log</h3>
+          {sbsLogs.filter(j => ['shortage', 'buy', 'sale'].includes(j.type)).length === 0 ? <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '20px' }}>No active shortages, sales, or buy requests logged.</p> : (
             <div className="azure-table-container">
               <table className="azure-table">
                 <thead>
@@ -272,11 +272,11 @@ const SalesDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sbsLogs.filter(j => ['shortage', 'buy'].includes(j.type)).map(job => (
+                  {sbsLogs.filter(j => ['shortage', 'buy', 'sale'].includes(j.type)).map(job => (
                     <tr key={job._id}>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{job.itemName}</td>
                       <td>
-                        <span className={`azure-badge ${job.type === 'shortage' ? 'danger' : 'warning'}`}>
+                        <span className={`azure-badge ${job.type === 'shortage' ? 'danger' : job.type === 'buy' ? 'warning' : 'success'}`}>
                           {job.type}
                         </span>
                       </td>

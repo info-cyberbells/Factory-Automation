@@ -351,7 +351,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   if (['super_admin', 'admin', 'sales'].includes(user?.role) && !rawMenus.some(m => m.key === 'orders')) {
     rawMenus.push({
       key: 'orders',
-      label: 'Sales Orders',
+      label: 'Client Billing & SO',
       icon: 'HiOutlineShoppingCart',
       path: '/orders',
       visible: true,
