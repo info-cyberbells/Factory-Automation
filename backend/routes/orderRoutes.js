@@ -21,7 +21,7 @@ router.route('/')
   .get(getOrders)
   .post(authorize('super_admin', 'admin', 'sales', 'orders'), createOrder);
 
-router.get('/shortages', authorize('super_admin', 'admin', 'supervisor', 'orders'), getShortageReports);
+router.get('/shortages', authorize('super_admin', 'admin', 'supervisor', 'sales', 'orders'), getShortageReports);
 router.post('/shortages/:id/plan', authorize('super_admin', 'admin', 'supervisor', 'orders'), planShortageProduction);
 
 router.post('/:id/dispatch', authorize('super_admin', 'admin', 'sales', 'store_manager', 'orders'), dispatchOrder);

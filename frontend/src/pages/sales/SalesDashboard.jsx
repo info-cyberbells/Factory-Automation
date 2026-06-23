@@ -165,13 +165,17 @@ const SalesDashboard = () => {
   };
 
   // Sourcing Shortage/Buy Order Action
-  const handleOrderShortage = async (id) => {
+  const handleOrderShortage = async (job) => {
     try {
-      await operationsAPI.updateShortageBuySale(id, { status: 'ordered' });
-      toast.success('Shortage raw materials ordered! Logged in pipeline.');
+      await operationsAPI.updateShortageBuySale(job._id, { status: 'ordered' });
+      if (job.type === 'sale') {
+        toast.success('Sale registered successfully!');
+      } else {
+        toast.success('Shortage raw materials ordered! Logged in pipeline.');
+      }
       fetchData();
     } catch (err) {
-      toast.error('Failed to order shortage items');
+      toast.error(job.type === 'sale' ? 'Failed to register sale' : 'Failed to order shortage items');
     }
   };
 
@@ -302,11 +306,13 @@ const SalesDashboard = () => {
                       </td>
                       <td>
                         {job.status !== 'ordered' ? (
-                          <button className="btn btn-primary btn-sm" onClick={() => handleOrderShortage(job._id)}>
-                            Order
+                          <button className="btn btn-primary btn-sm" onClick={() => handleOrderShortage(job)}>
+                            {job.type === 'sale' ? 'Sale' : 'Order'}
                           </button>
                         ) : (
-                          <span style={{ color: 'var(--success)', fontSize: '0.82rem', fontWeight: 600 }}>Ordered</span>
+                          <span style={{ color: 'var(--success)', fontSize: '0.82rem', fontWeight: 600 }}>
+                            {job.type === 'sale' ? 'Sold' : 'Ordered'}
+                          </span>
                         )}
                       </td>
                     </tr>
