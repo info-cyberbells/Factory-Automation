@@ -597,7 +597,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
             </div>
           </div>
           <div className="navbar-right">
-            {user?.role === 'super_admin' && (
+            {user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px' }}>
                 <span className="hide-on-mobile" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)' }}>Choose Org:</span>
                 <select

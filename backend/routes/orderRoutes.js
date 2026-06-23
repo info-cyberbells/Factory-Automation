@@ -6,7 +6,8 @@ const {
   getShortageReports,
   planShortageProduction,
   dispatchOrder,
-  getOrderStats
+  getOrderStats,
+  getOrderPDF
 } = require('../controllers/orderController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
@@ -14,6 +15,7 @@ const { authorize } = require('../middleware/rbac');
 router.use(protect);
 
 router.get('/stats', getOrderStats);
+router.get('/:id/pdf', getOrderPDF);
 
 router.route('/')
   .get(getOrders)

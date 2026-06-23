@@ -8,6 +8,7 @@ const {
   addVendor,
   getPOs,
   createPO,
+  getPOPDF,
   scanInvoice,
   getInvoices
 } = require('../controllers/financeController');
@@ -22,6 +23,7 @@ router.route('/vendors')
   .post(authorize('super_admin', 'admin'), addVendor);
 
 // Purchase Orders
+router.get('/pos/:id/pdf', getPOPDF);
 router.route('/pos')
   .get(getPOs)
   .post(authorize('super_admin', 'admin'), createPO);

@@ -3,6 +3,10 @@ const ShortageReport = require('../models/ShortageReport');
 const { createNotification } = require('./notificationController');
 const ChainInventory = require('../models/ChainInventory');
 const ProductionPlan = require('../models/ProductionPlan');
+const Organization = require('../models/Organization');
+const { generateSalesOrderPDF } = require('../utils/pdfGenerator');
+const PDFDocument = require('pdfkit');
+const tenantContext = require('../middleware/tenantContext');
 
 // @desc    Create new order and auto-calculate shortage
 // @route   POST /api/orders
@@ -39,6 +43,9 @@ exports.createOrder = async (req, res, next) => {
       status,
       createdBy: req.user._id
     });
+
+    order.pdfUrl = `/api/orders/${order._id}/pdf`;
+    await order.save();
 
     if (shortageMeters > 0) {
       await ShortageReport.create({
@@ -168,6 +175,47 @@ exports.getOrderStats = async (req, res, next) => {
       success: true,
       data: { totalOrders, pendingOrders, shortageOrders, dispatchedOrders }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Download Sales Order PDF
+// @route   GET /api/orders/:id/pdf
+// @access  Private
+exports.getOrderPDF = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    const orgId = tenantContext.getStore() || req.user.organizationId;
+    let org = null;
+    if (orgId) {
+      org = await Organization.findById(orgId);
+    }
+
+    if (!org) {
+      org = {
+        name: 'TrackBells ERP',
+        address: 'Factory Operations Center',
+        settings: {
+          brandName: 'TrackBells ERP',
+          brandSubtitle: 'Factory Automation',
+          logo: '/logo.png',
+          themeColor: '#1e3a8a',
+          footerText: 'Powered by Cyberbells ITES services pvt ltd'
+        }
+      };
+    }
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=SalesOrder_${order.orderNumber}.pdf`);
+
+    doc.pipe(res);
+    generateSalesOrderPDF(doc, order, org);
+    doc.end();
   } catch (error) {
     next(error);
   }

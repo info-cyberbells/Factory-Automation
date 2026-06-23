@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { orderAPI, aiAPI } from '../../services/api';
+import API, { orderAPI, aiAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
   HiOutlinePlus, HiOutlineShoppingCart, HiOutlineExclamationCircle, HiOutlineRefresh,
   HiOutlineCheckCircle, HiOutlineTruck, HiOutlineDocumentReport, HiOutlineX, HiOutlineLightningBolt,
-  HiOutlinePencil, HiOutlineTrash
+  HiOutlinePencil, HiOutlineTrash, HiOutlineDocumentDownload
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -105,6 +105,27 @@ const OrderDashboard = () => {
     }
   };
 
+  const handleDownloadPDF = async (pdfUrl, filename) => {
+    try {
+      toast.loading('Generating PDF...', { id: 'pdf-toast' });
+      const response = await API.get(pdfUrl, { responseType: 'blob' });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF downloaded successfully!', { id: 'pdf-toast' });
+    } catch (error) {
+      toast.error('Failed to download PDF', { id: 'pdf-toast' });
+    }
+  };
+
   const handleAskAI = async () => {
     if (!selectedShortage) return;
     setAiLoading(true);
@@ -191,6 +212,7 @@ const OrderDashboard = () => {
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <ActionBtn icon={<HiOutlineDocumentDownload />} title="Download PDF" color="#3b82f6" onClick={() => handleDownloadPDF(ord.pdfUrl || `/orders/${ord._id}/pdf`, `SalesOrder_${ord.orderNumber}.pdf`)} />
                       {ord.status === 'ready' && (
                         <button className="btn btn-accent btn-sm" onClick={() => handleDispatch(ord._id)}>Dispatch</button>
                       )}

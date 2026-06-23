@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { financeAPI } from '../../services/api';
+import API, { financeAPI } from '../../services/api';
 
 import {
   HiOutlineDocumentText, HiOutlinePlus, HiOutlineLibrary,
-  HiOutlineRefresh, HiOutlineX, HiOutlineLightningBolt
+  HiOutlineRefresh, HiOutlineX, HiOutlineLightningBolt, HiOutlineDocumentDownload
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -92,6 +92,27 @@ const FinanceDashboard = () => {
     }
   };
 
+  const handleDownloadPDF = async (pdfUrl, filename) => {
+    try {
+      toast.loading('Generating PDF...', { id: 'pdf-toast' });
+      const response = await API.get(pdfUrl, { responseType: 'blob' });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF downloaded successfully!', { id: 'pdf-toast' });
+    } catch (error) {
+      toast.error('Failed to download PDF', { id: 'pdf-toast' });
+    }
+  };
+
   return (
     <DashboardLayout pageTitle="Finance & Purchase">
       
@@ -159,13 +180,13 @@ const FinanceDashboard = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
             <thead>
               <tr style={{ background: 'var(--bg-input)', borderBottom: '1px solid var(--border)' }}>
-                {['Date', 'Vendor', 'Material', 'Qty (kg)', 'Rate', 'Total Amount', 'Status'].map((h, i) => (
+                {['Date', 'Vendor', 'Material', 'Qty (kg)', 'Rate', 'Total Amount', 'Status', 'Actions'].map((h, i) => (
                   <th key={i} style={{ padding: '14px 20px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {pos.length === 0 ? <tr><td colSpan={7} style={{ padding: '20px', textAlign: 'center' }}>No POs found.</td></tr> : pos.map(p => (
+              {pos.length === 0 ? <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>No POs found.</td></tr> : pos.map(p => (
                 <tr key={p._id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                   <td style={tdStyle}>{new Date(p.createdAt).toLocaleDateString()}</td>
                   <td style={tdStyle}><span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.vendorId?.vendorName}</span></td>
@@ -174,6 +195,9 @@ const FinanceDashboard = () => {
                   <td style={tdStyle}>₹{p.ratePerKg}/kg</td>
                   <td style={{ ...tdStyle, color: 'var(--success)', fontWeight: 600 }}>₹{p.totalAmount}</td>
                   <td style={tdStyle}><span className={`status-badge ${p.status === 'Received' ? 'verified' : 'pending'}`}>{p.status}</span></td>
+                  <td style={tdStyle}>
+                    <ActionBtn icon={<HiOutlineDocumentDownload />} title="Download PO PDF" color="#3b82f6" onClick={() => handleDownloadPDF(p.pdfUrl || `/finance/pos/${p._id}/pdf`, `PurchaseOrder_${p.poNumber || 'PO'}.pdf`)} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -288,6 +312,15 @@ const ModalOverlay = ({ children, onClose, title }) => (
       {children}
     </div>
   </div>
+);
+
+const ActionBtn = ({ icon, title, color, onClick }) => (
+  <button onClick={onClick} title={title} style={{
+    background: 'transparent', border: 'none', color: 'var(--text-dim)', fontSize: '1.2rem',
+    cursor: 'pointer', transition: 'all 0.2s', padding: '4px', borderRadius: '6px'
+  }} onMouseOver={e => { e.currentTarget.style.color = color; e.currentTarget.style.background = 'var(--bg-input)'; }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'transparent'; }}>
+    {icon}
+  </button>
 );
 
 export default FinanceDashboard;

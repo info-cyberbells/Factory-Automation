@@ -3,6 +3,10 @@ const FormData = require('form-data');
 const Vendor = require('../models/Vendor');
 const PurchaseOrder = require('../models/PurchaseOrder');
 const Invoice = require('../models/Invoice');
+const Organization = require('../models/Organization');
+const { generatePurchaseOrderPDF } = require('../utils/pdfGenerator');
+const PDFDocument = require('pdfkit');
+const tenantContext = require('../middleware/tenantContext');
 
 // @desc    Get all vendors
 exports.getVendors = async (req, res, next) => {
@@ -33,7 +37,23 @@ exports.createPO = async (req, res, next) => {
   try {
     const { vendorId, materialType, quantityKg, ratePerKg } = req.body;
     const totalAmount = quantityKg * ratePerKg;
-    const po = await PurchaseOrder.create({ vendorId, materialType, quantityKg, ratePerKg, totalAmount });
+
+    // Generate PO Number
+    const count = await PurchaseOrder.countDocuments();
+    const poNumber = `PO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(count+1).toString().padStart(3, '0')}`;
+
+    const po = await PurchaseOrder.create({ 
+      poNumber,
+      vendorId, 
+      materialType, 
+      quantityKg, 
+      ratePerKg, 
+      totalAmount 
+    });
+
+    po.pdfUrl = `/api/finance/pos/${po._id}/pdf`;
+    await po.save();
+
     res.status(201).json({ success: true, data: po });
   } catch (error) { next(error); }
 };
@@ -79,4 +99,45 @@ exports.getInvoices = async (req, res, next) => {
     const invoices = await Invoice.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: invoices });
   } catch (error) { next(error); }
+};
+
+// @desc    Download Purchase Order PDF
+// @route   GET /api/finance/pos/:id/pdf
+// @access  Private
+exports.getPOPDF = async (req, res, next) => {
+  try {
+    const po = await PurchaseOrder.findById(req.params.id).populate('vendorId');
+    if (!po) return res.status(404).json({ success: false, message: 'Purchase Order not found' });
+
+    const orgId = tenantContext.getStore() || req.user.organizationId;
+    let org = null;
+    if (orgId) {
+      org = await Organization.findById(orgId);
+    }
+
+    if (!org) {
+      org = {
+        name: 'TrackBells ERP',
+        address: 'Factory Operations Center',
+        settings: {
+          brandName: 'TrackBells ERP',
+          brandSubtitle: 'Factory Automation',
+          logo: '/logo.png',
+          themeColor: '#1e3a8a',
+          footerText: 'Powered by Cyberbells ITES services pvt ltd'
+        }
+      };
+    }
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=PurchaseOrder_${po.poNumber}.pdf`);
+
+    doc.pipe(res);
+    generatePurchaseOrderPDF(doc, po, org);
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
 };
