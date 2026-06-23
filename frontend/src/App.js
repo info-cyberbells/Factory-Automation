@@ -172,6 +172,12 @@ function App() {
             <Route path="/sales" element={
               <RoleRoute roles={['super_admin', 'admin', 'sales']}><SalesDashboard /></RoleRoute>
             } />
+            <Route path="/orders" element={
+              <RoleRoute roles={['super_admin', 'admin', 'sales']}><OrderDashboard /></RoleRoute>
+            } />
+            <Route path="/finance" element={
+              <RoleRoute roles={['super_admin', 'admin']}><FinanceDashboard /></RoleRoute>
+            } />
             <Route path="/users" element={
               <RoleRoute roles={['super_admin', 'admin']}><UserManagement /></RoleRoute>
             } />

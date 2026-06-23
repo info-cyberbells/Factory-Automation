@@ -347,6 +347,30 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     });
   }
 
+  // Inject Sales Orders menu dynamically if not present for authorized roles
+  if (['super_admin', 'admin', 'sales'].includes(user?.role) && !rawMenus.some(m => m.key === 'orders')) {
+    rawMenus.push({
+      key: 'orders',
+      label: 'Sales Orders',
+      icon: 'HiOutlineShoppingCart',
+      path: '/orders',
+      visible: true,
+      roles: ['super_admin', 'admin', 'sales']
+    });
+  }
+
+  // Inject Finance & Purchase menu dynamically if not present for authorized roles
+  if (['super_admin', 'admin'].includes(user?.role) && !rawMenus.some(m => m.key === 'finance')) {
+    rawMenus.push({
+      key: 'finance',
+      label: 'Finance & Purchase',
+      icon: 'HiOutlineDocumentReport',
+      path: '/finance',
+      visible: true,
+      roles: ['super_admin', 'admin']
+    });
+  }
+
   const activeMenus = rawMenus
     .filter(item => {
       // 1. Must be marked visible globally
@@ -379,7 +403,8 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       else if (item.key === 'supervisor') sectionName = 'Production';
       else if (['qualityChecker', 'qcInventoryRequests'].includes(item.key)) sectionName = 'QC Inspection';
       else if (item.key === 'storeManager') sectionName = 'Store Operations';
-      else if (item.key === 'sales') sectionName = 'Sales Log';
+      else if (['sales', 'orders'].includes(item.key)) sectionName = 'Sales Log';
+      else if (item.key === 'finance') sectionName = 'Finance';
       else if (['organizations', 'settings'].includes(item.key)) sectionName = 'Platform';
       else sectionName = 'General';
     }
