@@ -20,7 +20,7 @@ exports.predictShots = async (req, res, next) => {
     // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
     // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8989';
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8989';
-    
+
     const response = await axios.post(`${pythonApiUrl}/predict/shots`, {
       model_number: modelNumber,
       shortage_meters: shortageMeters
@@ -124,7 +124,7 @@ exports.chatWithAI = async (req, res, next) => {
     });
   } catch (error) {
     console.error('AI Chat Service error, using local fallback:', error.message);
-    
+
     // Graceful local fallback if Python AI service is down or times out
     const msg = (message || '').toLowerCase();
     let fallbackReply;
@@ -135,7 +135,7 @@ exports.chatWithAI = async (req, res, next) => {
     } else {
       fallbackReply = "Hello! I am the TrackBells Assistant. I'm currently running in local fallback mode because the primary AI service is offline. How can I help you today?";
     }
-    
+
     res.status(200).json({
       success: true,
       reply: fallbackReply
@@ -151,11 +151,13 @@ exports.getReports = async (req, res, next) => {
     // 1. QC Pass vs Reject Ratio (from WipBatch shotDetails)
     const qcData = await WipBatch.aggregate([
       { $match: { 'shotDetails.processedQty': { $exists: true } } },
-      { $group: { 
-          _id: null, 
-          passed: { $sum: '$shotDetails.processedQty' }, 
-          rejected: { $sum: '$shotDetails.rejectedQty' } 
-      }}
+      {
+        $group: {
+          _id: null,
+          passed: { $sum: '$shotDetails.processedQty' },
+          rejected: { $sum: '$shotDetails.rejectedQty' }
+        }
+      }
     ]);
     const qcPassReject = qcData.length > 0 ? qcData[0] : { passed: 0, rejected: 0 };
 
@@ -164,14 +166,18 @@ exports.getReports = async (req, res, next) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const outputData = await WipBatch.aggregate([
-      { $match: { 
-          currentStage: 'ready_for_assembly', 
-          updatedAt: { $gte: sevenDaysAgo } 
-      }},
-      { $group: {
+      {
+        $match: {
+          currentStage: 'ready_for_assembly',
+          updatedAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" } },
           meters: { $sum: '$materialIssued' } // Simplified as proxy for output
-      }},
+        }
+      },
       { $sort: { '_id': 1 } }
     ]);
 
