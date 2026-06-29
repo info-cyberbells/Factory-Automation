@@ -40,15 +40,15 @@ exports.createPO = async (req, res, next) => {
 
     // Generate PO Number
     const count = await PurchaseOrder.countDocuments();
-    const poNumber = `PO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${(count+1).toString().padStart(3, '0')}`;
+    const poNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${(count + 1).toString().padStart(3, '0')}`;
 
-    const po = await PurchaseOrder.create({ 
+    const po = await PurchaseOrder.create({
       poNumber,
-      vendorId, 
-      materialType, 
-      quantityKg, 
-      ratePerKg, 
-      totalAmount 
+      vendorId,
+      materialType,
+      quantityKg,
+      ratePerKg,
+      totalAmount
     });
 
     po.pdfUrl = `/api/finance/pos/${po._id}/pdf`;
@@ -69,7 +69,7 @@ exports.scanInvoice = async (req, res, next) => {
     // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
     // const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8989';
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8989';
-    
+
     const form = new FormData();
     form.append('file', req.file.buffer, req.file.originalname);
 
@@ -89,8 +89,12 @@ exports.scanInvoice = async (req, res, next) => {
 
     res.status(200).json({ success: true, data: invoice, aiExtracted: aiData });
   } catch (error) {
-    console.error('OCR Error:', error.message);
-    res.status(500).json({ success: false, message: 'AI OCR failed' });
+    const errorDetail = error.response?.data?.detail || error.message;
+    console.error('OCR Error:', errorDetail);
+    res.status(500).json({
+      success: false,
+      message: `AI OCR failed: ${errorDetail}`
+    });
   }
 };
 
