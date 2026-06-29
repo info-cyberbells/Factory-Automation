@@ -360,15 +360,22 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   }
 
   // Inject Finance & Purchase menu dynamically if not present for authorized roles
-  if (['super_admin', 'admin'].includes(user?.role) && !rawMenus.some(m => m.key === 'finance')) {
-    rawMenus.push({
-      key: 'finance',
-      label: 'Finance & Purchase',
-      icon: 'HiOutlineDocumentReport',
-      path: '/finance',
-      visible: true,
-      roles: ['super_admin', 'admin']
-    });
+  if (['super_admin', 'admin', 'sales'].includes(user?.role)) {
+    const finMenu = rawMenus.find(m => m.key === 'finance');
+    if (finMenu) {
+      if (finMenu.roles && !finMenu.roles.includes('sales')) {
+        finMenu.roles.push('sales');
+      }
+    } else {
+      rawMenus.push({
+        key: 'finance',
+        label: 'Finance & Purchase',
+        icon: 'HiOutlineDocumentReport',
+        path: '/finance',
+        visible: true,
+        roles: ['super_admin', 'admin', 'sales']
+      });
+    }
   }
 
   const activeMenus = rawMenus

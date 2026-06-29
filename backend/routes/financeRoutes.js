@@ -32,6 +32,6 @@ router.route('/pos')
 router.route('/invoices')
   .get(getInvoices);
   
-router.post('/scan-invoice', authorize('super_admin', 'admin'), upload.single('file'), scanInvoice);
+router.post('/scan-invoice', authorize('super_admin', 'admin', 'sales'), upload.single('file'), scanInvoice);
 
 module.exports = router;
