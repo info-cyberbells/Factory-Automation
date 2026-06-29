@@ -14,6 +14,15 @@ class InvoiceResponse(BaseModel):
     tax_amount: float
     raw_text: str
 
+def safe_float(val):
+    if not val:
+        return 0.0
+    try:
+        clean_val = str(val).replace('$', '').replace(',', '').strip()
+        return float(clean_val)
+    except (ValueError, TypeError):
+        return 0.0
+
 @router.post("/scan-invoice", response_model=InvoiceResponse)
 async def scan_invoice(file: UploadFile = File(...)):
     """
@@ -43,8 +52,8 @@ async def scan_invoice(file: UploadFile = File(...)):
             return InvoiceResponse(
                 vendor_name=data.get("vendor_name", "Unknown Vendor"),
                 invoice_number=data.get("invoice_number", "INV-000"),
-                total_amount=float(data.get("total_amount", 0)),
-                tax_amount=float(data.get("tax_amount", 0)),
+                total_amount=safe_float(data.get("total_amount")),
+                tax_amount=safe_float(data.get("tax_amount")),
                 raw_text="Extracted via OpenAI GPT"
             )
         except Exception as e:
