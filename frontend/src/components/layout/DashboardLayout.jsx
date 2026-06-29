@@ -206,7 +206,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     window.location.reload();
   };
 
-  const isPlatformPage = ['/admin/organizations', '/settings'].includes(location.pathname);
+  const isPlatformPage = ['/admin/organizations', '/settings', '/dashboard'].includes(location.pathname);
   const needsOrgSelection = user?.role === 'super_admin' && !user?.organizationId && !selectedOrgId && !isPlatformPage;
 
   const isAdmin = ['super_admin', 'admin'].includes(user?.role);
@@ -386,8 +386,8 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
 
       // 2. Role access check
       if (item.roles && item.roles.length > 0) {
-        // Platform admin gets access to everything
-        if (user?.role === 'super_admin' && user?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL) return true;
+        // Platform admin and Organisation admin get access to everything
+        if (['super_admin', 'admin'].includes(user?.role)) return true;
         return item.roles.includes(user?.role);
       }
       return true;

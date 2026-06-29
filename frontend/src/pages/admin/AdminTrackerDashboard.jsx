@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { gateEntryAPI, operationsAPI } from '../../services/api';
 import {
-  HiOutlineTruck, HiOutlineCog, HiOutlineClipboardCheck, HiOutlineCube,
-  HiOutlineExclamation, HiOutlineCheckCircle, HiOutlineClock, HiOutlineTrendingUp
+  HiOutlineTruck, HiOutlineCog, HiOutlineClock, HiOutlineExclamation
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://localhost:9898`;
@@ -16,7 +19,8 @@ const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${w
 const AdminTrackerDashboard = () => {
   const { user } = useAuth();
   
-  const [gateLogs, setGateLogs] = useState([]);
+
+  const [totalGateCount, setTotalGateCount] = useState(0);
   const [machines, setMachines] = useState([]);
   const [buildJobs, setBuildJobs] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -35,7 +39,7 @@ const AdminTrackerDashboard = () => {
         operationsAPI.getQualityLogs(),
         operationsAPI.getShortageBuySales()
       ]);
-      setGateLogs(gateRes.data.data);
+      setTotalGateCount(gateRes.data.pagination?.total || gateRes.data.data.length);
       setMachines(machRes.data.data);
       setBuildJobs(buildRes.data.data);
       setInventory(invRes.data.data);
@@ -76,6 +80,47 @@ const AdminTrackerDashboard = () => {
   const activeBuildOrders = buildJobs.filter(j => ['pending', 'processing'].includes(j.status)).length;
   const shortageOrders = buildJobs.filter(j => j.status === 'shortage_reported').length;
 
+  // Recharts Data Sets
+  const registryVolumeData = [
+    { name: 'Gate Logs', count: totalGateCount, color: '#3b82f6' },
+    { name: 'Quality Audits', count: qcLogs.length, color: '#10b981' },
+    { name: 'Production Runs', count: buildJobs.length, color: '#8b5cf6' },
+    { name: 'Shortage Flags', count: sbsLogs.filter(l => l.type === 'shortage').length, color: '#ef4444' }
+  ];
+
+  const machineryStatusData = [
+    { name: 'Working', value: machines.filter(m => m.status === 'working').length, color: '#10b981' },
+    { name: 'Broken', value: machines.filter(m => m.status === 'broken').length, color: '#ef4444' },
+    { name: 'Idle/Other', value: machines.filter(m => !['working', 'broken'].includes(m.status)).length, color: '#64748b' }
+  ].filter(d => d.value > 0);
+
+  const wipStagesData = [
+    { name: 'Pending', value: buildJobs.filter(j => j.status === 'pending').length, color: '#eab308' },
+    { name: 'Processing', value: buildJobs.filter(j => j.status === 'processing').length, color: '#3b82f6' },
+    { name: 'Completed', value: buildJobs.filter(j => j.status === 'completed').length, color: '#22c55e' },
+    { name: 'Shortages', value: buildJobs.filter(j => j.status === 'shortage_reported').length, color: '#ef4444' }
+  ].filter(d => d.value > 0);
+
+  const topInventoryData = [...inventory]
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5)
+    .map(item => ({
+      name: item.name.length > 15 ? `${item.name.substring(0, 15)}...` : item.name,
+      quantity: item.quantity
+    }));
+
+  const qcInspectionData = [
+    { name: 'Inspected', value: qcLogs.filter(l => l.qcType === 'inspected').length, color: '#10b981' },
+    { name: 'Damaged', value: qcLogs.filter(l => l.qcType === 'damaged').length, color: '#ef4444' },
+    { name: 'Missed', value: qcLogs.filter(l => l.qcType === 'missed').length, color: '#f59e0b' }
+  ].filter(d => d.value > 0);
+
+  const sourcingStatusData = [
+    { name: 'Pending', value: sbsLogs.filter(l => l.status === 'pending').length, color: '#ef4444' },
+    { name: 'Assigned', value: sbsLogs.filter(l => l.status === 'assigned').length, color: '#3b82f6' },
+    { name: 'Sourced', value: sbsLogs.filter(l => l.status === 'completed' || l.status === 'ordered').length, color: '#10b981' }
+  ].filter(d => d.value > 0);
+
   return (
     <DashboardLayout pageTitle="Enterprise Real-Time Pipeline Tracker">
       
@@ -92,7 +137,7 @@ const AdminTrackerDashboard = () => {
                 <div className="stat-icon blue"><HiOutlineTruck /></div>
                 <span className="azure-badge running">Live</span>
               </div>
-              <div className="stat-value">{gateLogs.length}</div>
+              <div className="stat-value">{totalGateCount}</div>
               <div className="stat-label">Inward Gate Shipments Logs</div>
             </div>
 
@@ -124,333 +169,170 @@ const AdminTrackerDashboard = () => {
             </div>
           </div>
 
-          {/* Real-time Flow Pipeline Tracker */}
-          <div className="azure-card" style={{ padding: '24px', marginBottom: '28px' }}>
-            <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-              <HiOutlineTrendingUp style={{ color: 'var(--primary)' }} /> Live Manufacturing Pipeline flow
-            </h3>
-            
-            <div className="pipeline-container">
-              <div className={`pipeline-step ${gateLogs.length > 0 ? 'completed' : 'active'}`}>
-                <div className="pipeline-step-circle">🚚</div>
-                <div className="pipeline-step-label">Gate Log inward</div>
-              </div>
-              
-              <div className={`pipeline-step ${qcLogs.filter(l => l.status === 'verified').length > 0 ? 'completed' : 'active'}`}>
-                <div className="pipeline-step-circle">🔎</div>
-                <div className="pipeline-step-label">QC inspected</div>
-              </div>
-              
-              <div className={`pipeline-step ${buildJobs.filter(j => j.status === 'processing').length > 0 ? 'completed' : 'active'}`}>
-                <div className="pipeline-step-circle">⚙️</div>
-                <div className="pipeline-step-label">Production build</div>
-              </div>
-              
-              <div className={`pipeline-step ${buildJobs.filter(j => j.status === 'completed').length > 0 ? 'completed' : 'active'}`}>
-                <div className="pipeline-step-circle">📦</div>
-                <div className="pipeline-step-label">Dispatched to Store</div>
-              </div>
 
-              <div className={`pipeline-step ${buildJobs.filter(j => j.status === 'received').length > 0 ? 'completed' : ''}`}>
-                <div className="pipeline-step-circle">✅</div>
-                <div className="pipeline-step-label">Godown stocked</div>
-              </div>
-            </div>
-          </div>
 
-          {/* Detailed Lists Grids */}
+          {/* Detailed Lists Grids replaced by Recharts Graphical Components */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr', gap: '28px', marginBottom: '28px' }}>
             
-            {/* Live Build Queue status */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Manufacturing Line Status</h3>
-              <div className="azure-table-container" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Stage</th>
-                      <th>Expected date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                     {buildJobs.map(job => (
-                      <tr key={job._id}>
-                        <td>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{job.productName}</div>
-                          {job.machineId && typeof job.machineId === 'object' ? (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineId.name} {job.machineId.capacity ? `(${job.machineId.capacity})` : ''}</div>
-                          ) : job.machineName ? (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '2px', fontWeight: 600 }}>⚙️ {job.machineName}</div>
-                          ) : null}
-                          {job.materialsUsed && job.materialsUsed.length > 0 && (
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>📦 {job.materialsUsed.map(m => `${m.quantity} ${m.unit} ${m.materialName}`).join(', ')}</div>
-                          )}
-                        </td>
-                        <td style={{ fontWeight: 700 }}>{job.orderQuantity} pcs</td>
-                        <td>
-                          <span className={`azure-badge ${
-                            job.status === 'pending' ? 'warning' :
-                            job.status === 'shortage_reported' ? 'danger' :
-                            job.status === 'processing' ? 'running' :
-                            job.status === 'delayed' ? 'danger' : 'success'
-                          }`}>
-                            {job.status === 'delayed' ? '⚠️ delayed' : job.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          {job.estimatedDate ? new Date(job.estimatedDate).toLocaleString() : 'Scheduling...'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* WIP Stages Donut Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Production WIP Stages Distribution</h3>
+              <div style={{ width: '100%', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {wipStagesData.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: '0.88rem' }}>No active production runs.</div>
+                ) : (
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={wipStagesData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {wipStagesData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
-            {/* Quality & OCR Logs Warnings */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Quality Inspections Audit Trail</h3>
-              <div className="azure-table-container" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Material</th>
-                      <th>Quantity</th>
-                      <th>Report Type</th>
-                      <th>Verification Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {qcLogs.map(log => (
-                      <tr key={log._id}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{log.materialName}</td>
-                        <td style={{ fontWeight: 700 }}>{log.quantity} {log.unit}</td>
-                        <td>
-                          <span className={`azure-badge ${
-                            log.qcType === 'inspected' ? 'success' :
-                            log.qcType === 'damaged' ? 'danger' : 'warning'
-                          }`}>
-                            {log.qcType}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`azure-badge ${
-                            log.status === 'verified' ? 'success' : 'warning'
-                          }`}>
-                            {log.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Operations Registry Volume Bar Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Operations Registry Volume Chart</h3>
+              <div style={{ width: '100%', height: '260px', flexGrow: 1 }}>
+                <ResponsiveContainer>
+                  <BarChart data={registryVolumeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="name" fontSize={11} stroke="var(--text-dim)" tickLine={false} />
+                    <YAxis fontSize={11} stroke="var(--text-dim)" tickLine={false} axisLine={false} />
+                    <Tooltip cursor={{ fill: 'rgba(249, 115, 22, 0.04)' }} />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                      {registryVolumeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '28px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '28px', marginBottom: '28px' }}>
             
-            {/* Machine Automation monitoring */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Machinery Live Status</h3>
-              <div className="azure-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Machine Name</th>
-                      <th>Operating Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {machines.map(m => (
-                      <tr key={m._id}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.name}</td>
-                        <td>
-                          <span className={`azure-badge ${
-                            m.status === 'working' ? 'success' :
-                            m.status === 'running' || m.status === 'idle' ? 'warning' : 'danger'
-                          }`}>
-                            {m.status === 'running' ? 'in progress' : m.status === 'broken' ? 'damaged' : m.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Machinery Live Status Donut Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Machinery Health & Status</h3>
+              <div style={{ width: '100%', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {machineryStatusData.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: '0.88rem' }}>No machinery modules registered.</div>
+                ) : (
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={machineryStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {machineryStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
-            {/* Inward shipments log */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Recent Gate Logs</h3>
-              <div className="azure-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Bill Info</th>
-                      <th>Vendor Sourcing</th>
-                      <th>Inward Qty</th>
-                      <th>Invoice Document</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gateLogs.map(entry => (
-                      <tr key={entry._id}>
-                        <td>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{entry.billNumber}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '4px', whiteSpace: 'nowrap' }}>
-                            ⏱️ {new Date(entry.createdAt).toLocaleString()}
-                          </div>
-                        </td>
-                        <td>{entry.vendorName}</td>
-                        <td style={{ color: 'var(--primary-light)', fontWeight: 600 }}>{entry.quantity} {entry.unit}</td>
-                        <td>
-                          {entry.invoiceUrl ? (
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              {/* <a 
-                                href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                              >
-                                View
-                              </a> */}
-                              <a 
-                                href={`${SOCKET_URL}${entry.invoiceUrl}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                              >
-                                View
-                              </a>
-                              {/* <a 
-                                href={`http://${window.location.hostname}:5000${entry.invoiceUrl}`} 
-                                download
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
-                              >
-                                Download
-                              </a> */}
-                              <a 
-                                href={`${SOCKET_URL}${entry.invoiceUrl}`} 
-                                download
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '2px 8px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px', borderColor: 'var(--success)', color: 'var(--success)' }}
-                              >
-                                Download
-                              </a>
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>No Invoice</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className={`azure-badge ${
-                            entry.status === 'pending' ? 'warning' : 'success'
-                          }`}>
-                            {entry.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Inventory Levels Bar Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Top Inventory Stock Snapshot</h3>
+              <div style={{ width: '100%', height: '260px', flexGrow: 1 }}>
+                {topInventoryData.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>No inventory data available.</div>
+                ) : (
+                  <ResponsiveContainer>
+                    <BarChart data={topInventoryData} layout="vertical" margin={{ top: 10, right: 10, left: 30, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+                      <XAxis type="number" fontSize={11} stroke="var(--text-dim)" tickLine={false} />
+                      <YAxis dataKey="name" type="category" fontSize={11} stroke="var(--text-dim)" tickLine={false} axisLine={false} />
+                      <Tooltip />
+                      <Bar dataKey="quantity" fill="#f97316" radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
           </div>
 
-          {/* Third row: Shortage/Buy/Sales & Available Stock levels */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '28px', marginTop: '28px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr', gap: '28px' }}>
             
-            {/* Shortage & Sourcing Communications */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Shortage & Sourcing Registry</h3>
-              <div className="azure-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Item Name</th>
-                      <th>Category</th>
-                      <th>Quantity</th>
-                      <th>Assignee</th>
-                      <th>Sourcing Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sbsLogs.length === 0 ? (
-                      <tr><td colSpan={5} style={{ textAlign: 'center', padding: '10px' }}>No active shortages or procurement logs.</td></tr>
-                    ) : (
-                      sbsLogs.map(log => (
-                        <tr key={log._id}>
-                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {log.itemName}
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '2px' }}>{log.remarks || 'No remarks'}</div>
-                          </td>
-                          <td>
-                            <span className={`azure-badge ${
-                              log.type === 'shortage' ? 'danger' :
-                              log.type === 'buy' ? 'warning' : 'success'
-                            }`}>
-                              {log.type}
-                            </span>
-                          </td>
-                          <td style={{ fontWeight: 700 }}>{log.quantity} {log.unit}</td>
-                          <td style={{ color: 'var(--primary-light)', fontWeight: 600 }}>{log.assignedTo}</td>
-                          <td>
-                            <span className={`azure-badge ${
-                              log.status === 'pending' ? 'warning' :
-                              log.status === 'assigned' ? 'running' : 'success'
-                            }`}>
-                              {log.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+            {/* Quality control results Pie Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Quality Inspections Audit Outcomes</h3>
+              <div style={{ width: '100%', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {qcInspectionData.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: '0.88rem' }}>No quality inspections logged.</div>
+                ) : (
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={qcInspectionData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {qcInspectionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
-            {/* Inventory Levels Snapshot */}
-            <div className="azure-card" style={{ padding: '24px' }}>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1rem' }}>Inventory Stock Snapshot</h3>
-              <div className="azure-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table className="azure-table">
-                  <thead>
-                    <tr>
-                      <th>Item Name</th>
-                      <th>Type</th>
-                      <th>Quantity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventory.length === 0 ? (
-                      <tr><td colSpan={3} style={{ textAlign: 'center', padding: '10px' }}>No inventory items found.</td></tr>
-                    ) : (
-                      inventory.slice(0, 10).map(item => (
-                        <tr key={item._id}>
-                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.name}</td>
-                          <td style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>{item.type.replace('_', ' ')}</td>
-                          <td style={{ fontWeight: 700, color: item.quantity === 0 ? 'var(--danger)' : 'var(--success)' }}>
-                            {item.quantity} {item.unit}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+            {/* Shortage & Sourcing Status Bar Chart */}
+            <div className="azure-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '20px', fontSize: '1rem', fontWeight: 700 }}>Shortage & Sourcing Sourcing Registry</h3>
+              <div style={{ width: '100%', height: '260px', flexGrow: 1 }}>
+                {sourcingStatusData.length === 0 ? (
+                  <div style={{ color: 'var(--text-dim)', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>No shortages or sourcing logs.</div>
+                ) : (
+                  <ResponsiveContainer>
+                    <BarChart data={sourcingStatusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis dataKey="name" fontSize={11} stroke="var(--text-dim)" tickLine={false} />
+                      <YAxis fontSize={11} stroke="var(--text-dim)" tickLine={false} axisLine={false} />
+                      <Tooltip cursor={{ fill: 'rgba(249, 115, 22, 0.04)' }} />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {sourcingStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 

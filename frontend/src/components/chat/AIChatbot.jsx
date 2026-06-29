@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { aiAPI } from '../../services/api';
 import { HiOutlineChat, HiOutlineX, HiOutlinePaperAirplane } from 'react-icons/hi';
+import { useAuth } from '../../context/AuthContext';
 
 const parseMarkdownToHTML = (text) => {
   if (!text) return '';
@@ -31,6 +32,7 @@ const parseMarkdownToHTML = (text) => {
 };
 
 const AIChatbot = () => {
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'system', text: 'Hello! I am the TrackBells AI Assistant. How can I assist you with factory inventory, build orders, or sourcing queries today?' }
@@ -65,6 +67,8 @@ const AIChatbot = () => {
       }
     };
   }, [messages]);
+
+  if (!isAuthenticated) return null;
 
   const handleSend = async (queryText) => {
     const userMsg = queryText || input.trim();

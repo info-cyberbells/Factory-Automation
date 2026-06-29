@@ -45,6 +45,8 @@ const protect = async (req, res, next) => {
       const headerOrgId = req.headers['x-organization-id'];
       if (headerOrgId && headerOrgId !== 'null' && headerOrgId !== 'undefined' && headerOrgId !== '') {
         tenantId = headerOrgId;
+      } else if (req.user.email === 'superadmin@trackbells.com' || req.user.email === process.env.PLATFORM_ADMIN_EMAIL) {
+        tenantId = null;
       }
     }
 
