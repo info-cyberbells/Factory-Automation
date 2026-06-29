@@ -10,7 +10,10 @@ const {
   createPO,
   getPOPDF,
   scanInvoice,
-  getInvoices
+  getInvoices,
+  createSalesInvoice,
+  getSalesInvoices,
+  getSalesInvoicePDF
 } = require('../controllers/financeController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
@@ -28,10 +31,17 @@ router.route('/pos')
   .get(getPOs)
   .post(authorize('super_admin', 'admin'), createPO);
 
-// Invoices & OCR
+// Invoices & OCR (Scanned Invoices)
 router.route('/invoices')
   .get(getInvoices);
   
 router.post('/scan-invoice', authorize('super_admin', 'admin', 'sales'), upload.single('file'), scanInvoice);
+
+// Generated Sales Invoices
+router.route('/sales-invoices')
+  .get(getSalesInvoices)
+  .post(authorize('super_admin', 'admin', 'sales', 'store_manager'), createSalesInvoice);
+
+router.get('/sales-invoices/:id/pdf', getSalesInvoicePDF);
 
 module.exports = router;

@@ -22,6 +22,7 @@ import HRDashboard from './pages/hr/HRDashboard';
 import SettingsDashboard from './pages/admin/SettingsDashboard';
 import OrganizationManagement from './pages/admin/OrganizationManagement';
 import FinanceDashboard from './pages/finance/FinanceDashboard';
+import InvoiceGenerator from './pages/finance/InvoiceGenerator';
 import AIChatbot from './components/chat/AIChatbot';
 import RemoteScanner from './pages/store/RemoteScanner';
 
@@ -176,7 +177,10 @@ function App() {
               <RoleRoute roles={['super_admin', 'admin', 'sales']}><OrderDashboard /></RoleRoute>
             } />
             <Route path="/finance" element={
-              <RoleRoute roles={['super_admin', 'admin']}><FinanceDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'sales']}><FinanceDashboard /></RoleRoute>
+            } />
+            <Route path="/invoice-generator" element={
+              <RoleRoute roles={['super_admin', 'admin', 'sales', 'store_manager']}><InvoiceGenerator /></RoleRoute>
             } />
             <Route path="/users" element={
               <RoleRoute roles={['super_admin', 'admin']}><UserManagement /></RoleRoute>

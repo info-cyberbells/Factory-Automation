@@ -12,7 +12,7 @@ import {
   HiOutlineCube, HiOutlineShoppingCart, HiOutlineChartBar, HiOutlineLightningBolt,
   HiOutlineBell, HiOutlineLogout, HiOutlineAdjustments, HiOutlineUsers,
   HiOutlineDocumentReport, HiOutlineUserGroup, HiOutlineMenu, HiOutlineOfficeBuilding,
-  HiOutlineSun, HiOutlineMoon, HiOutlineClipboardList
+  HiOutlineSun, HiOutlineMoon, HiOutlineClipboardList, HiOutlineDocumentText
 } from 'react-icons/hi';
 
 // const SOCKET_URL = process.env.REACT_APP_API_URL || `http://${window.location.hostname}:5000`;
@@ -22,7 +22,16 @@ const SOCKET_URL = process.env.REACT_APP_API_URL || (window.location.port ? `${w
 const getImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('/uploads/')) {
-    return `${SOCKET_URL}${url}`;
+    const apiURL = process.env.REACT_APP_API_URL;
+    if (apiURL) {
+      const base = apiURL.endsWith('/api') ? apiURL : (apiURL.endsWith('/api/') ? apiURL.slice(0, -1) : `${apiURL}/api`);
+      return `${base}${url}`;
+    }
+    if (window.location.port) {
+      return `${window.location.protocol}//${window.location.hostname}:9898${url}`;
+    } else {
+      return `${window.location.origin}/api${url}`;
+    }
   }
   return url;
 };
@@ -99,7 +108,8 @@ const ICON_MAP = {
   HiOutlineUserGroup: <HiOutlineUserGroup />,
   HiOutlineMenu: <HiOutlineMenu />,
   HiOutlineOfficeBuilding: <HiOutlineOfficeBuilding />,
-  HiOutlineClipboardList: <HiOutlineClipboardList />
+  HiOutlineClipboardList: <HiOutlineClipboardList />,
+  HiOutlineDocumentText: <HiOutlineDocumentText />
 };
 
 const ROLE_LABELS = {
@@ -378,6 +388,27 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     }
   }
 
+  // Inject Invoice Generator menu dynamically if not present for authorized roles
+  if (['super_admin', 'admin', 'sales', 'store_manager'].includes(user?.role)) {
+    const genMenu = rawMenus.find(m => m.key === 'invoiceGenerator');
+    if (genMenu) {
+      if (genMenu.roles) {
+        ['sales', 'store_manager'].forEach(r => {
+          if (!genMenu.roles.includes(r)) genMenu.roles.push(r);
+        });
+      }
+    } else {
+      rawMenus.push({
+        key: 'invoiceGenerator',
+        label: 'Invoice Generator',
+        icon: 'HiOutlineDocumentText',
+        path: '/invoice-generator',
+        visible: true,
+        roles: ['super_admin', 'admin', 'sales', 'store_manager']
+      });
+    }
+  }
+
   const activeMenus = rawMenus
     .filter(item => {
       // 1. Must be marked visible globally
@@ -411,7 +442,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       else if (['qualityChecker', 'qcInventoryRequests'].includes(item.key)) sectionName = 'QC Inspection';
       else if (item.key === 'storeManager') sectionName = 'Store Operations';
       else if (['sales', 'orders'].includes(item.key)) sectionName = 'Sales Log';
-      else if (item.key === 'finance') sectionName = 'Finance';
+      else if (['finance', 'invoiceGenerator'].includes(item.key)) sectionName = 'Finance';
       else if (['organizations', 'settings'].includes(item.key)) sectionName = 'Platform';
       else sectionName = 'General';
     }

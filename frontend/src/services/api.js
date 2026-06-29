@@ -145,6 +145,8 @@ export const financeAPI = {
   createPO: (data) => API.post('/finance/pos', data),
   scanInvoice: (formData) => API.post('/finance/scan-invoice', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getInvoices: () => API.get('/finance/invoices'),
+  createSalesInvoice: (data) => API.post('/finance/sales-invoices', data),
+  getSalesInvoices: () => API.get('/finance/sales-invoices'),
 };
 
 // Notification API calls

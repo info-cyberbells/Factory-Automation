@@ -4,7 +4,8 @@ const Vendor = require('../models/Vendor');
 const PurchaseOrder = require('../models/PurchaseOrder');
 const Invoice = require('../models/Invoice');
 const Organization = require('../models/Organization');
-const { generatePurchaseOrderPDF } = require('../utils/pdfGenerator');
+const SalesInvoice = require('../models/SalesInvoice');
+const { generatePurchaseOrderPDF, generateSalesInvoicePDF } = require('../utils/pdfGenerator');
 const PDFDocument = require('pdfkit');
 const tenantContext = require('../middleware/tenantContext');
 
@@ -140,6 +141,96 @@ exports.getPOPDF = async (req, res, next) => {
 
     doc.pipe(res);
     generatePurchaseOrderPDF(doc, po, org);
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Create a sales invoice
+// @route   POST /api/finance/sales-invoices
+// @access  Private
+exports.createSalesInvoice = async (req, res, next) => {
+  try {
+    const { invoiceNumber, clientName, clientAddress, clientGST, invoiceDate, dueDate, items, subtotal, taxAmount, grandTotal, notes } = req.body;
+    
+    // Auto-generate invoice number if not provided
+    let finalInvoiceNumber = invoiceNumber;
+    if (!finalInvoiceNumber) {
+      const count = await SalesInvoice.countDocuments();
+      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+      finalInvoiceNumber = `INV-${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
+    }
+
+    const invoice = await SalesInvoice.create({
+      invoiceNumber: finalInvoiceNumber,
+      clientName,
+      clientAddress,
+      clientGST,
+      invoiceDate: invoiceDate || new Date(),
+      dueDate,
+      items,
+      subtotal,
+      taxAmount,
+      grandTotal,
+      notes
+    });
+
+    res.status(201).json({ success: true, data: invoice });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all sales invoices
+// @route   GET /api/finance/sales-invoices
+// @access  Private
+exports.getSalesInvoices = async (req, res, next) => {
+  try {
+    const invoices = await SalesInvoice.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: invoices });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Download Sales Invoice PDF
+// @route   GET /api/finance/sales-invoices/:id/pdf
+// @access  Private
+exports.getSalesInvoicePDF = async (req, res, next) => {
+  try {
+    const invoice = await SalesInvoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Sales Invoice not found' });
+    }
+
+    const orgId = tenantContext.getStore() || req.user.organizationId;
+    let org = null;
+    if (orgId) {
+      org = await Organization.findById(orgId);
+    }
+
+    if (!org) {
+      org = {
+        name: 'TrackBells ERP',
+        address: 'Factory Operations Center',
+        settings: {
+          brandName: 'TrackBells ERP',
+          brandSubtitle: 'Factory Automation',
+          logo: '/logo.png',
+          themeColor: '#1e3a8a',
+          footerText: 'Powered by Cyberbells ITES services pvt ltd'
+        }
+      };
+    }
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=Invoice_${invoice.invoiceNumber}.pdf`);
+
+    doc.pipe(res);
+    generateSalesInvoicePDF(doc, invoice, org);
     doc.end();
   } catch (error) {
     next(error);

@@ -237,3 +237,111 @@ exports.generatePurchaseOrderPDF = (doc, po, org) => {
   
   drawFooter(doc, org);
 };
+
+/**
+ * Generate Sales Invoice PDF dynamically
+ */
+exports.generateSalesInvoicePDF = (doc, invoice, org) => {
+  const themeColor = (org.settings && org.settings.themeColor) || '#1e3a8a';
+  
+  drawHeader(doc, org, 'TAX INVOICE');
+  
+  // Client details
+  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('BILL TO / CLIENT:', 50, 150);
+  doc.fillColor('#1f2937').font('Helvetica-Bold').fontSize(12).text(invoice.clientName || 'N/A', 50, 165);
+  
+  let clientDetailsY = 182;
+  if (invoice.clientAddress) {
+    doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text(invoice.clientAddress, 50, clientDetailsY);
+    clientDetailsY += 14;
+  }
+  if (invoice.clientGST) {
+    doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(9).text(`GSTIN: ${invoice.clientGST}`, 50, clientDetailsY);
+  }
+  
+  // Invoice meta
+  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('INVOICE DETAILS:', 320, 150);
+  
+  const rightGridX = 320;
+  const rightGridValX = 420;
+  let currentY = 165;
+  
+  const addMetaRow = (label, val, bold = false) => {
+    doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text(label, rightGridX, currentY);
+    doc.fillColor('#1f2937').font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9).text(val, rightGridValX, currentY);
+    currentY += 16;
+  };
+  
+  addMetaRow('Invoice Number:', invoice.invoiceNumber || 'N/A', true);
+  addMetaRow('Invoice Date:', formatDate(invoice.invoiceDate));
+  if (invoice.dueDate) {
+    addMetaRow('Due Date:', formatDate(invoice.dueDate));
+  }
+  
+  // Table
+  currentY = 240;
+  
+  // Table Header
+  doc.rect(50, currentY, 495.28, 24).fill(themeColor);
+  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9);
+  doc.text('S.No', 55, currentY + 7);
+  doc.text('Item Description', 90, currentY + 7);
+  doc.text('Qty', 270, currentY + 7, { align: 'right', width: 40 });
+  doc.text('Rate', 320, currentY + 7, { align: 'right', width: 60 });
+  doc.text('GST %', 390, currentY + 7, { align: 'right', width: 40 });
+  doc.text('Total (INR)', 445, currentY + 7, { align: 'right', width: 90 });
+  
+  currentY += 24;
+  
+  // Table Rows
+  (invoice.items || []).forEach((item, idx) => {
+    // Zebra striping
+    if (idx % 2 === 0) {
+      doc.rect(50, currentY, 495.28, 22).fill('#f9fafb');
+    }
+    
+    doc.fillColor('#1f2937').font('Helvetica').fontSize(9);
+    doc.text(String(idx + 1), 55, currentY + 6);
+    doc.text(item.description || 'N/A', 90, currentY + 6, { width: 175 });
+    doc.text(String(item.quantity), 270, currentY + 6, { align: 'right', width: 40 });
+    doc.text(formatCurrency(item.rate).replace('₹', '').trim(), 320, currentY + 6, { align: 'right', width: 60 });
+    doc.text(`${item.taxRate || 18}%`, 390, currentY + 6, { align: 'right', width: 40 });
+    doc.text(formatCurrency(item.amount).replace('₹', '').trim(), 445, currentY + 6, { align: 'right', width: 90 });
+    
+    currentY += 22;
+  });
+  
+  // Divider
+  doc.moveTo(50, currentY + 5).lineTo(545.28, currentY + 5).strokeColor('#e5e7eb').lineWidth(1).stroke();
+  currentY += 10;
+  
+  // Summary
+  const summaryX = 350;
+  const summaryValX = 450;
+  
+  doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text('Subtotal:', summaryX, currentY);
+  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.subtotal), summaryValX, currentY, { align: 'right', width: 80 });
+  currentY += 16;
+  
+  doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text('GST Tax Amount:', summaryX, currentY);
+  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.taxAmount), summaryValX, currentY, { align: 'right', width: 80 });
+  currentY += 18;
+  
+  doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(10).text('Grand Total:', summaryX, currentY);
+  doc.fillColor(themeColor).font('Helvetica-Bold').fontSize(11).text(formatCurrency(invoice.grandTotal), summaryValX, currentY - 1, { align: 'right', width: 80 });
+  
+  // Note/T&C
+  currentY += 50;
+  doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(9).text('Notes:', 50, currentY);
+  currentY += 14;
+  doc.font('Helvetica').fontSize(8).fillColor('#6b7280');
+  doc.text(invoice.notes || 'Thank you for your business!', 50, currentY, { width: 495.28 });
+  
+  currentY += 24;
+  doc.font('Helvetica-Bold').fontSize(8).fillColor('#6b7280').text('Terms & Conditions:', 50, currentY);
+  doc.font('Helvetica').fontSize(7).fillColor('#9ca3af');
+  doc.text('1. Payment is due within the stipulated time frame.', 50, currentY + 12, { width: 495.28 });
+  doc.text('2. Interest of 18% p.a. will be charged for payments delayed beyond the due date.', 50, currentY + 20, { width: 495.28 });
+  
+  drawFooter(doc, org);
+};
