@@ -325,7 +325,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   };
 
   // Dynamically compile menu items based on organization settings database config
-  const rawMenus = [...(settings?.menus || [])];
+  const rawMenus = [...(settings?.menus || [])].filter(m => m.key !== 'orders');
   
   // Always ensure dashboard menu is at the very top of the sidebar for super_admin and admin
   if (['super_admin', 'admin'].includes(user?.role)) {
@@ -360,18 +360,6 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   const hasOrdersAccess = ['super_admin', 'admin', 'sales'].includes(user?.role) || (user?.role === 'user' && user?.permissions?.includes('orders'));
   const hasFinanceAccess = ['super_admin', 'admin', 'sales'].includes(user?.role) || (user?.role === 'user' && user?.permissions?.includes('finance'));
   const hasInvoiceAccess = ['super_admin', 'admin', 'sales', 'store_manager'].includes(user?.role) || (user?.role === 'user' && (user?.permissions?.includes('finance') || user?.permissions?.includes('store')));
-
-  // Inject Sales Orders menu dynamically if not present for authorized roles
-  if (hasOrdersAccess && !rawMenus.some(m => m.key === 'orders')) {
-    rawMenus.push({
-      key: 'orders',
-      label: 'Client Billing & SO',
-      icon: 'HiOutlineShoppingCart',
-      path: '/orders',
-      visible: true,
-      roles: ['super_admin', 'admin', 'sales', 'user']
-    });
-  }
 
   // Inject Finance & Purchase menu dynamically if not present for authorized roles
   if (hasFinanceAccess) {

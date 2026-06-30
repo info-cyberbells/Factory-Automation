@@ -104,8 +104,8 @@ const RoleRoute = ({ children, roles = [], permission }) => {
   const isMasterAdmin = ['super_admin', 'admin'].includes(user?.role);
   if (isMasterAdmin) return children;
 
-  // For regular users, if a permission is required, check their permissions array
-  if (permission && user?.permissions) {
+  // For regular users with custom role, check their permissions array if a permission is required
+  if (user?.role === 'user' && permission && user?.permissions) {
     if (!user.permissions.includes(permission)) {
       return <Navigate to="/dashboard" replace />;
     }
