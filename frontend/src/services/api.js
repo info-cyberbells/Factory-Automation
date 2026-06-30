@@ -147,6 +147,7 @@ export const financeAPI = {
   getInvoices: () => API.get('/finance/invoices'),
   createSalesInvoice: (data) => API.post('/finance/sales-invoices', data),
   getSalesInvoices: () => API.get('/finance/sales-invoices'),
+  deleteSalesInvoice: (id) => API.delete(`/finance/sales-invoices/${id}`),
 };
 
 // Notification API calls

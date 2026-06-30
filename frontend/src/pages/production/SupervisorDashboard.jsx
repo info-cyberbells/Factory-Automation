@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { gateEntryAPI, operationsAPI } from '../../services/api';
 import {
@@ -52,22 +52,94 @@ const SupervisorDashboard = () => {
 
   // Predefined Belt Machinery
   const PREDEFINED_MACHINES = [
-    "Belt Extruder 01",
-    "Belt Extruder 02",
-    "Conveyor Vulcanizer A",
-    "Conveyor Vulcanizer B",
-    "Drag Chain Link Assembler 01",
-    "Drag Chain Link Assembler 02",
-    "Belt Cutting Machine",
+    // Group 1: Conveyor Belt Production
+    "Belt Extruder Machine",
+    "Conveyor Vulcanizer",
+    "Belt Cutting & Slitting Machine",
+    "Belt Fabric Core Loom",
+    
+    // Group 2: Chain & Assembly Lines
+    "Drag Chain Link Assembler",
+    "Automated Assembly Station",
+    "Robotic Welder & Riveter",
+    
+    // Group 3: Molding & Casting
+    "Link Molding Injection Machine",
+    "Die Casting Mold Station",
+    "High-Pressure Press Machine",
+    
+    // Group 4: Quality Testing & Calibration
     "Tensile Strength Tester",
-    "Link Molding Machine 01"
+    "Laser Diameter & Thickness Gauge",
+    "Defect X-Ray Scanner",
+    
+    // Group 5: Packaging & Sorter Operations
+    "Automatic Shrink Wrapper",
+    "Industrial Box Packager",
+    "Pneumatic Sorter & Rejecter",
+    
+    // Group 6: General Plant Utilities
+    "Heavy Duty Air Compressor",
+    "Chiller & Cooling Unit",
+    "Backup Generator System"
   ];
+
+  const MACHINE_CATEGORIES = {
+    "Conveyor Belt Production": [
+      "Belt Extruder Machine",
+      "Conveyor Vulcanizer",
+      "Belt Cutting & Slitting Machine",
+      "Belt Fabric Core Loom"
+    ],
+    "Chain & Assembly Lines": [
+      "Drag Chain Link Assembler",
+      "Automated Assembly Station",
+      "Robotic Welder & Riveter"
+    ],
+    "Molding & Casting": [
+      "Link Molding Injection Machine",
+      "Die Casting Mold Station",
+      "High-Pressure Press Machine"
+    ],
+    "Quality Testing & Calibration": [
+      "Tensile Strength Tester",
+      "Laser Diameter & Thickness Gauge",
+      "Defect X-Ray Scanner"
+    ],
+    "Packaging & Sorter Operations": [
+      "Automatic Shrink Wrapper",
+      "Industrial Box Packager",
+      "Pneumatic Sorter & Rejecter"
+    ],
+    "General Plant Utilities": [
+      "Heavy Duty Air Compressor",
+      "Chiller & Cooling Unit",
+      "Backup Generator System"
+    ]
+  };
 
   // Machine Form
   const [machineForm, setMachineForm] = useState({ name: '', status: 'working', remarks: '', capacity: '', modelNumber: '', powerRating: '', lastServiceDate: '' });
   const [editingMachineId, setEditingMachineId] = useState(null);
   const [selectedMachineType, setSelectedMachineType] = useState('');
   const [isCustomMachineName, setIsCustomMachineName] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubMachine, setSelectedSubMachine] = useState('');
+  const [showCustomDropdown, setShowCustomDropdown] = useState(false);
+  const [activeHoverCategory, setActiveHoverCategory] = useState(null);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCustomDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Build Form
   const [buildModalMode, setBuildModalMode] = useState('create'); // 'create' or 'edit'
@@ -217,7 +289,11 @@ const SupervisorDashboard = () => {
       setMachineForm({ name: '', status: 'working', remarks: '', capacity: '', modelNumber: '', powerRating: '', lastServiceDate: '' });
       setEditingMachineId(null);
       setSelectedMachineType('');
+      setSelectedCategory('');
+      setSelectedSubMachine('');
       setIsCustomMachineName(false);
+      setShowCustomDropdown(false);
+      setActiveHoverCategory(null);
       fetchData();
     } catch (err) {
       toast.error('Failed to save machine');
@@ -225,7 +301,7 @@ const SupervisorDashboard = () => {
       setSubmitting(false);
     }
   };
-
+ 
   const handleEditMachine = (mach) => {
     setMachineForm({
       name: mach.name,
@@ -238,11 +314,26 @@ const SupervisorDashboard = () => {
     });
     setEditingMachineId(mach._id);
     
-    if (PREDEFINED_MACHINES.includes(mach.name)) {
-      setSelectedMachineType(mach.name);
+    let foundCategory = '';
+    let foundSub = '';
+    
+    for (const [cat, sublist] of Object.entries(MACHINE_CATEGORIES)) {
+      if (sublist.includes(mach.name)) {
+        foundCategory = cat;
+        foundSub = mach.name;
+        break;
+      }
+    }
+    
+    if (foundCategory) {
+      setSelectedCategory(foundCategory);
+      setSelectedSubMachine(foundSub);
+      setActiveHoverCategory(foundCategory);
       setIsCustomMachineName(false);
     } else {
-      setSelectedMachineType('custom');
+      setSelectedCategory('custom');
+      setSelectedSubMachine('');
+      setActiveHoverCategory('custom');
       setIsCustomMachineName(true);
     }
     
@@ -599,6 +690,10 @@ const SupervisorDashboard = () => {
               setEditingMachineId(null);
               setMachineForm({ name: '', status: 'working', remarks: '', capacity: '', modelNumber: '', powerRating: '', lastServiceDate: '' });
               setSelectedMachineType('');
+              setSelectedCategory('');
+              setSelectedSubMachine('');
+              setShowCustomDropdown(false);
+              setActiveHoverCategory(null);
               setIsCustomMachineName(false);
               setShowMachineModal(true);
             }}><HiOutlinePlus /> Add Machine</button>
@@ -792,48 +887,150 @@ const SupervisorDashboard = () => {
       {showMachineModal && (
         <ModalOverlay onClose={() => setShowMachineModal(false)} title={editingMachineId ? "Edit Belt Machine Status" : "Add Belt Production Machine"}>
           <form onSubmit={handleSaveMachine}>
-            <div style={{ display: 'grid', gridTemplateColumns: isCustomMachineName ? '1fr 1fr 1fr' : '1.2fr 0.8fr', gap: '16px' }}>
-              <div className="form-group">
-                <label className="form-label">Machine Type *</label>
-                <select 
-                  className="form-input" 
-                  required 
-                  value={selectedMachineType} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    setSelectedMachineType(val);
-                    if (val === 'custom') {
-                      setIsCustomMachineName(true);
-                      setMachineForm(prev => ({ ...prev, name: '' }));
-                    } else {
-                      setIsCustomMachineName(false);
-                      setMachineForm(prev => ({ ...prev, name: val }));
-                    }
-                  }}
-                >
-                  <option value="">-- Choose Type --</option>
-                  {PREDEFINED_MACHINES.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                  <option value="custom">-- Custom Name --</option>
-                </select>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px', marginBottom: '16px' }}>
               
-              {isCustomMachineName && (
-                <div className="form-group">
-                  <label className="form-label">Custom Machine Name *</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    required 
-                    value={machineForm.name} 
-                    onChange={e => setMachineForm({ ...machineForm, name: e.target.value })} 
-                    placeholder="Enter custom machine name" 
-                  />
-                </div>
-              )}
+              {/* Left Column: Selector + Custom Input if active */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group" style={{ position: 'relative', margin: 0 }} ref={dropdownRef}>
+                  <label className="form-label">Machine Type *</label>
+                  
+                  {/* Trigger Button */}
+                  <div 
+                    onClick={() => setShowCustomDropdown(!showCustomDropdown)}
+                    style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 14px', background: 'var(--bg-input, rgba(255,255,255,0.02))',
+                      border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer',
+                      height: '38px', fontSize: '0.9rem', color: 'var(--text-primary)'
+                    }}
+                  >
+                    <span>{machineForm.name || '-- Select Machine --'}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>▼</span>
+                  </div>
 
-              <div className="form-group">
+                  {/* Floating Category Menu */}
+                  {showCustomDropdown && (
+                    <div style={{
+                      position: 'absolute', top: '70px', left: 0, width: '460px', height: '260px',
+                      background: 'var(--bg-card, #1e293b)', border: '1px solid var(--border)',
+                      borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                      display: 'flex', zIndex: 1000, overflow: 'hidden'
+                    }}>
+                      {/* Left Panel: Categories */}
+                      <div style={{
+                        width: '200px', borderRight: '1px solid var(--border)',
+                        padding: '8px 0', overflowY: 'auto', background: 'rgba(0,0,0,0.1)'
+                      }}>
+                        {Object.keys(MACHINE_CATEGORIES).map(cat => (
+                          <div
+                            key={cat}
+                            onMouseEnter={() => {
+                              setActiveHoverCategory(cat);
+                            }}
+                            style={{
+                              padding: '10px 16px', fontSize: '0.85rem', cursor: 'pointer',
+                              color: activeHoverCategory === cat ? 'var(--primary)' : 'var(--text-secondary)',
+                              background: activeHoverCategory === cat ? 'rgba(249, 115, 22, 0.08)' : 'transparent',
+                              fontWeight: activeHoverCategory === cat ? 600 : 500,
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {cat}
+                          </div>
+                        ))}
+                        <div
+                          onMouseEnter={() => {
+                            setActiveHoverCategory('custom');
+                          }}
+                          onClick={() => {
+                            setIsCustomMachineName(true);
+                            setMachineForm(prev => ({ ...prev, name: '' }));
+                            setShowCustomDropdown(false);
+                          }}
+                          style={{
+                            padding: '10px 16px', fontSize: '0.85rem', cursor: 'pointer',
+                            color: activeHoverCategory === 'custom' ? 'var(--primary)' : 'var(--text-secondary)',
+                            background: activeHoverCategory === 'custom' ? 'rgba(249, 115, 22, 0.08)' : 'transparent',
+                            fontWeight: activeHoverCategory === 'custom' ? 600 : 500,
+                            borderTop: '1px solid var(--border)'
+                          }}
+                        >
+                          -- Custom Name --
+                        </div>
+                      </div>
+
+                      {/* Right Panel: Sub-Machines */}
+                      <div style={{ flex: 1, padding: '8px 0', overflowY: 'auto', background: 'transparent' }}>
+                        {activeHoverCategory && activeHoverCategory !== 'custom' ? (
+                          <>
+                            <div style={{ padding: '8px 16px 4px', fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              {activeHoverCategory}
+                            </div>
+                            {(MACHINE_CATEGORIES[activeHoverCategory] || []).map(sub => (
+                              <div
+                                key={sub}
+                                onClick={() => {
+                                  setMachineForm(prev => ({ ...prev, name: sub }));
+                                  setIsCustomMachineName(false);
+                                  setShowCustomDropdown(false);
+                                }}
+                                style={{
+                                  padding: '8px 16px', fontSize: '0.85rem', cursor: 'pointer',
+                                  color: machineForm.name === sub ? 'var(--primary)' : 'var(--text-primary)',
+                                  background: machineForm.name === sub ? 'rgba(249, 115, 22, 0.04)' : 'transparent',
+                                  border: machineForm.name === sub ? '1px solid var(--primary)' : '1px solid transparent',
+                                  borderRadius: '6px',
+                                  margin: '2px 8px',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                onMouseOver={e => {
+                                  e.currentTarget.style.border = '1px solid var(--primary)';
+                                  if (machineForm.name !== sub) {
+                                    e.currentTarget.style.background = 'rgba(249, 115, 22, 0.04)';
+                                  }
+                                }}
+                                onMouseOut={e => {
+                                  e.currentTarget.style.border = machineForm.name === sub ? '1px solid var(--primary)' : '1px solid transparent';
+                                  if (machineForm.name !== sub) {
+                                    e.currentTarget.style.background = 'transparent';
+                                  }
+                                }}
+                              >
+                                {sub}
+                              </div>
+                            ))}
+                          </>
+                        ) : activeHoverCategory === 'custom' ? (
+                          <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            Click here to type a custom name.
+                          </div>
+                        ) : (
+                          <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                            Hover over a category on the left to view machines
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {isCustomMachineName && (
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Custom Machine Name *</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      required 
+                      value={machineForm.name} 
+                      onChange={e => setMachineForm({ ...machineForm, name: e.target.value })} 
+                      placeholder="Enter custom machine name" 
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Status */}
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Operational Status *</label>
                 <select className="form-input" value={machineForm.status} onChange={e => setMachineForm({ ...machineForm, status: e.target.value })}>
                   <option value="working">Working</option>

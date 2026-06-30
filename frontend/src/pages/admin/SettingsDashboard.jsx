@@ -18,8 +18,16 @@ const SettingsDashboard = () => {
   const { user } = useAuth();
   const { settings, updateSettings, reloadSettings } = useOrg();
   
-  const [activeTab, setActiveTab] = useState('security');
+  const [activeTab, setActiveTab] = useState('branding');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user && user.role === 'super_admin') {
+      setActiveTab('security');
+    } else if (user && user.role !== 'super_admin') {
+      setActiveTab('branding');
+    }
+  }, [user]);
 
   // 1. Security & Compliance states
   const [securitySettings, setSecuritySettings] = useState({
@@ -144,17 +152,19 @@ const SettingsDashboard = () => {
         
         {/* TABS NAVBAR */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '28px', borderBottom: '1px solid var(--border)', paddingBottom: '8px', overflowX: 'auto' }}>
-          <button 
-            onClick={() => setActiveTab('security')} 
-            style={{
-              padding: '10px 20px', borderRadius: '8px', border: 'none',
-              background: activeTab === 'security' ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
-              color: activeTab === 'security' ? 'var(--primary)' : 'var(--text-secondary)',
-              fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'var(--transition-fast)', whiteSpace: 'nowrap'
-            }}
-          >
-            🛡️ Security & Compliance
-          </button>
+          {user?.role === 'super_admin' && (
+            <button 
+              onClick={() => setActiveTab('security')} 
+              style={{
+                padding: '10px 20px', borderRadius: '8px', border: 'none',
+                background: activeTab === 'security' ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
+                color: activeTab === 'security' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'var(--transition-fast)', whiteSpace: 'nowrap'
+              }}
+            >
+              🛡️ Security & Compliance
+            </button>
+          )}
           <button 
             onClick={() => setActiveTab('branding')} 
             style={{
@@ -180,7 +190,7 @@ const SettingsDashboard = () => {
         </div>
 
         {/* TAB 1: SECURITY & COMPLIANCE */}
-        {activeTab === 'security' && (
+        {activeTab === 'security' && user?.role === 'super_admin' && (
           <div className="glass-card" style={{ padding: '32px' }}>
             <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <IconShield style={{ color: 'var(--primary)' }} /> Security Settings

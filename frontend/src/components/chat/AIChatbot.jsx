@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { aiAPI } from '../../services/api';
 import { HiOutlineChat, HiOutlineX, HiOutlinePaperAirplane } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
+import { useOrg } from '../../context/OrgContext';
 
-const parseMarkdownToHTML = (text) => {
+const parseMarkdownToHTML = (text, themeColor = '#f97316') => {
   if (!text) return '';
   
   // Convert markdown **bold** to <strong>bold</strong>
@@ -15,13 +16,13 @@ const parseMarkdownToHTML = (text) => {
     const trimmed = line.trim();
     if (trimmed.startsWith('- ')) {
       return `<div style="display: flex; gap: 8px; margin: 4px 0; align-items: flex-start; padding-left: 4px;">
-        <span style="color: #f97316; font-size: 1rem; line-height: 1.25;">•</span>
+        <span style="color: ${themeColor}; font-size: 1rem; line-height: 1.25;">•</span>
         <div style="flex: 1;">${trimmed.substring(2)}</div>
       </div>`;
     }
     if (trimmed.startsWith('• ')) {
       return `<div style="display: flex; gap: 8px; margin: 4px 0; align-items: flex-start; padding-left: 4px;">
-        <span style="color: #f97316; font-size: 1rem; line-height: 1.25;">•</span>
+        <span style="color: ${themeColor}; font-size: 1rem; line-height: 1.25;">•</span>
         <div style="flex: 1;">${trimmed.substring(2)}</div>
       </div>`;
     }
@@ -33,6 +34,26 @@ const parseMarkdownToHTML = (text) => {
 
 const AIChatbot = () => {
   const { isAuthenticated } = useAuth();
+  const { settings } = useOrg();
+  const themeColor = settings?.themeColor || '#f97316';
+
+  const getGradient = (color) => {
+    if (!color || !color.startsWith('#')) return 'linear-gradient(135deg, #f97316, #ea580c)';
+    
+    // Parse hex to integer and darken slightly
+    let num = parseInt(color.replace("#", ""), 16);
+    let R = (num >> 16) - 20;
+    let G = ((num >> 8) & 0x00ff) - 20;
+    let B = (num & 0x0000ff) - 20;
+    
+    R = R < 0 ? 0 : R;
+    G = G < 0 ? 0 : G;
+    B = B < 0 ? 0 : B;
+    
+    const darkColor = "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    return `linear-gradient(135deg, ${color}, ${darkColor})`;
+  };
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'system', text: 'Hello! I am the TrackBells AI Assistant. How can I assist you with factory inventory, build orders, or sourcing queries today?' }
@@ -96,8 +117,8 @@ const AIChatbot = () => {
           onClick={() => setIsOpen(true)}
           style={{
             position: 'fixed', bottom: '24px', right: '24px', width: '60px', height: '60px',
-            borderRadius: '30px', background: 'linear-gradient(135deg, #f97316, #ea580c)',
-            color: '#fff', border: 'none', boxShadow: '0 10px 25px -5px rgba(249, 115, 22, 0.4)',
+            borderRadius: '30px', background: getGradient(themeColor),
+            color: '#fff', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem',
             cursor: 'pointer', zIndex: 9999, transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -118,9 +139,9 @@ const AIChatbot = () => {
         }}>
           {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #f97316, #ea580c)', padding: '18px 20px',
+            background: getGradient(themeColor), padding: '18px 20px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            boxShadow: '0 4px 12px rgba(249,115,22,0.1)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ position: 'relative' }}>
@@ -146,7 +167,7 @@ const AIChatbot = () => {
                 
                 {/* Bubble content */}
                 <div style={{
-                  background: msg.role === 'user' ? '#f97316' : '#ffffff',
+                  background: msg.role === 'user' ? themeColor : '#ffffff',
                   color: msg.role === 'user' ? '#ffffff' : '#334155',
                   padding: '12px 16px', borderRadius: '16px', fontSize: '0.88rem',
                   border: msg.role === 'user' ? 'none' : '1px solid #e2e8f0',
@@ -158,7 +179,7 @@ const AIChatbot = () => {
                   {msg.role === 'user' ? (
                     msg.text
                   ) : (
-                    <div dangerouslySetInnerHTML={{ __html: parseMarkdownToHTML(msg.text) }} />
+                    <div dangerouslySetInnerHTML={{ __html: parseMarkdownToHTML(msg.text, themeColor) }} />
                   )}
                 </div>
               </div>
@@ -167,16 +188,14 @@ const AIChatbot = () => {
               <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b' }}>AI Assistant</span>
                 <div style={{ background: '#ffffff', padding: '12px 16px', borderRadius: '16px', borderTopLeftRadius: '4px', border: '1px solid #e2e8f0', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                  <div className="dot" style={{ width: '6px', height: '6px', background: '#f97316', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out' }} />
-                  <div className="dot" style={{ width: '6px', height: '6px', background: '#f97316', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.2s' }} />
-                  <div className="dot" style={{ width: '6px', height: '6px', background: '#f97316', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.4s' }} />
+                  <div className="dot" style={{ width: '6px', height: '6px', background: themeColor, borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out' }} />
+                  <div className="dot" style={{ width: '6px', height: '6px', background: themeColor, borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.2s' }} />
+                  <div className="dot" style={{ width: '6px', height: '6px', background: themeColor, borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.4s' }} />
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
-
-
 
           {/* Input Form */}
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} style={{
@@ -190,14 +209,14 @@ const AIChatbot = () => {
                 color: '#334155', padding: '10px 16px', borderRadius: '24px', outline: 'none', fontSize: '0.88rem',
                 transition: 'border-color 0.2s'
               }}
-              onFocus={e => e.currentTarget.style.borderColor = '#f97316'}
+              onFocus={e => e.currentTarget.style.borderColor = themeColor}
               onBlur={e => e.currentTarget.style.borderColor = '#cbd5e1'}
             />
             <button type="submit" disabled={loading || !input.trim()} style={{
-              background: 'linear-gradient(135deg, #f97316, #ea580c)', color: '#ffffff', border: 'none', width: '40px', height: '40px',
+              background: getGradient(themeColor), color: '#ffffff', border: 'none', width: '40px', height: '40px',
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', opacity: (loading || !input.trim()) ? 0.5 : 1,
-              boxShadow: '0 4px 10px rgba(249,115,22,0.2)'
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
             }}>
               <HiOutlinePaperAirplane style={{ transform: 'rotate(90deg)', fontSize: '1.1rem' }} />
             </button>

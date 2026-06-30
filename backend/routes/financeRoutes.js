@@ -13,7 +13,8 @@ const {
   getInvoices,
   createSalesInvoice,
   getSalesInvoices,
-  getSalesInvoicePDF
+  getSalesInvoicePDF,
+  deleteSalesInvoice
 } = require('../controllers/financeController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
@@ -43,5 +44,6 @@ router.route('/sales-invoices')
   .post(authorize('super_admin', 'admin', 'sales', 'store_manager'), createSalesInvoice);
 
 router.get('/sales-invoices/:id/pdf', getSalesInvoicePDF);
+router.delete('/sales-invoices/:id', authorize('super_admin', 'admin', 'sales', 'store_manager'), deleteSalesInvoice);
 
 module.exports = router;

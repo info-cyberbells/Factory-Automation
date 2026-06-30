@@ -10,7 +10,21 @@ const { Server } = require('socket.io');
 dotenv.config();
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+  const Organization = require('./models/Organization');
+  Organization.find().then(orgs => {
+    orgs.forEach(org => {
+      if (org.settings && org.settings.footerText && org.settings.footerText.includes('Cyberbells')) {
+        org.settings.footerText = org.settings.footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
+        org.save().then(() => {
+          console.log(`Updated organization settings footerText in DB: ${org.name}`);
+        });
+      }
+    });
+  }).catch(err => {
+    console.error('Error migrating organization settings footer text:', err);
+  });
+});
 
 const app = express();
 const server = http.createServer(app);

@@ -553,8 +553,12 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
                 <img src="/logo_icon.png" alt="TrackBells Icon" style={{ maxHeight: '48px', maxWidth: '48px', objectFit: 'contain' }} />
               </div>
               <div className="brand" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>TrackBells</h3>
-                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0, lineHeight: 1.2 }}>ERP Automation</span>
+                <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+                  {settings.brandName || 'TrackBells'}
+                </h3>
+                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0, lineHeight: 1.2 }}>
+                  {settings.brandSubtitle || 'ERP Automation'}
+                </span>
               </div>
             </>
           ) : (

@@ -14,11 +14,11 @@ const formatDate = (date) => {
 
 // Helper to format currency
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const formatted = new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount);
+  return `Rs. ${formatted}`;
 };
 
 // Draw general page header
@@ -32,10 +32,16 @@ const drawHeader = (doc, org, title) => {
   let logoPlaced = false;
   if (org.settings && org.settings.logo && org.settings.logo !== '/logo.png') {
     try {
-      const logoPath = path.join(__dirname, '../', org.settings.logo);
+      let relativePath = org.settings.logo;
+      if (relativePath.includes('/uploads/')) {
+        relativePath = relativePath.slice(relativePath.indexOf('/uploads/'));
+      }
+      const logoPath = path.join(__dirname, '../', relativePath);
       if (fs.existsSync(logoPath)) {
         doc.image(logoPath, 50, 30, { fit: [120, 50] });
         logoPlaced = true;
+      } else {
+        console.error('PDF Logo path does not exist:', logoPath);
       }
     } catch (err) {
       console.error('PDF Logo placement failed:', err.message);
@@ -72,7 +78,10 @@ const drawHeader = (doc, org, title) => {
 
 // Draw general page footer
 const drawFooter = (doc, org) => {
-  const footerText = (org.settings && org.settings.footerText) || 'Powered by Cyberbells ITES services pvt ltd';
+  let footerText = (org.settings && org.settings.footerText) || 'Powered by TrackBells';
+  if (footerText.includes('Cyberbells')) {
+    footerText = footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
+  }
   doc.moveTo(50, 765).lineTo(545.28, 765).strokeColor('#e5e7eb').lineWidth(1).stroke();
   
   doc.fillColor('#9ca3af').fontSize(8).font('Helvetica');
@@ -247,10 +256,10 @@ exports.generateSalesInvoicePDF = (doc, invoice, org) => {
   drawHeader(doc, org, 'TAX INVOICE');
   
   // Client details
-  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('BILL TO / CLIENT:', 50, 150);
-  doc.fillColor('#1f2937').font('Helvetica-Bold').fontSize(12).text(invoice.clientName || 'N/A', 50, 165);
+  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('BILL TO / CLIENT:', 50, 135);
+  doc.fillColor('#1f2937').font('Helvetica-Bold').fontSize(12).text(invoice.clientName || 'N/A', 50, 150);
   
-  let clientDetailsY = 182;
+  let clientDetailsY = 167;
   if (invoice.clientAddress) {
     doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text(invoice.clientAddress, 50, clientDetailsY);
     clientDetailsY += 14;
@@ -259,16 +268,21 @@ exports.generateSalesInvoicePDF = (doc, invoice, org) => {
     doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(9).text(`GSTIN: ${invoice.clientGST}`, 50, clientDetailsY);
   }
   
-  // Invoice meta
-  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('INVOICE DETAILS:', 320, 150);
+  // Invoice meta (Aligned to the right under the Email details)
+  doc.fillColor('#374151').font('Helvetica-Bold').fontSize(9).text('INVOICE DETAILS:', 300, 135, { align: 'right', width: 245 });
   
-  const rightGridX = 320;
-  const rightGridValX = 420;
-  let currentY = 165;
+  let currentY = 150;
   
   const addMetaRow = (label, val, bold = false) => {
-    doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text(label, rightGridX, currentY);
-    doc.fillColor('#1f2937').font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9).text(val, rightGridValX, currentY);
+    const valFont = bold ? 'Helvetica-Bold' : 'Helvetica';
+    doc.font(valFont).fontSize(9);
+    const valWidth = doc.widthOfString(val);
+    
+    // Draw the value right-aligned at X=545
+    doc.fillColor('#1f2937').text(val, 545 - valWidth, currentY);
+    
+    // Draw the label right-aligned directly to the left of the value (leaving 6px gap)
+    doc.font('Helvetica').fillColor('#4b5563').text(label, 300, currentY, { align: 'right', width: 245 - valWidth - 6 });
     currentY += 16;
   };
   
@@ -279,7 +293,7 @@ exports.generateSalesInvoicePDF = (doc, invoice, org) => {
   }
   
   // Table
-  currentY = 240;
+  currentY = 210;
   
   // Table Header
   doc.rect(50, currentY, 495.28, 24).fill(themeColor);
@@ -289,7 +303,7 @@ exports.generateSalesInvoicePDF = (doc, invoice, org) => {
   doc.text('Qty', 270, currentY + 7, { align: 'right', width: 40 });
   doc.text('Rate', 320, currentY + 7, { align: 'right', width: 60 });
   doc.text('GST %', 390, currentY + 7, { align: 'right', width: 40 });
-  doc.text('Total (INR)', 445, currentY + 7, { align: 'right', width: 90 });
+  doc.text('Total (INR)', 445, currentY + 7, { align: 'right', width: 100 });
   
   currentY += 24;
   
@@ -304,44 +318,57 @@ exports.generateSalesInvoicePDF = (doc, invoice, org) => {
     doc.text(String(idx + 1), 55, currentY + 6);
     doc.text(item.description || 'N/A', 90, currentY + 6, { width: 175 });
     doc.text(String(item.quantity), 270, currentY + 6, { align: 'right', width: 40 });
-    doc.text(formatCurrency(item.rate).replace('₹', '').trim(), 320, currentY + 6, { align: 'right', width: 60 });
+    doc.text(formatCurrency(item.rate).replace('Rs.', '').replace('₹', '').trim(), 320, currentY + 6, { align: 'right', width: 60 });
     doc.text(`${item.taxRate || 18}%`, 390, currentY + 6, { align: 'right', width: 40 });
-    doc.text(formatCurrency(item.amount).replace('₹', '').trim(), 445, currentY + 6, { align: 'right', width: 90 });
+    doc.text(formatCurrency(item.amount).replace('Rs.', '').replace('₹', '').trim(), 445, currentY + 6, { align: 'right', width: 100 });
     
     currentY += 22;
   });
   
   // Divider
   doc.moveTo(50, currentY + 5).lineTo(545.28, currentY + 5).strokeColor('#e5e7eb').lineWidth(1).stroke();
-  currentY += 10;
+  currentY += 5;
   
   // Summary
   const summaryX = 350;
-  const summaryValX = 450;
+  const summaryValX = 445;
   
   doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text('Subtotal:', summaryX, currentY);
-  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.subtotal), summaryValX, currentY, { align: 'right', width: 80 });
+  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.subtotal), summaryValX, currentY, { align: 'right', width: 100 });
   currentY += 16;
   
   doc.fillColor('#4b5563').font('Helvetica').fontSize(9).text('GST Tax Amount:', summaryX, currentY);
-  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.taxAmount), summaryValX, currentY, { align: 'right', width: 80 });
+  doc.fillColor('#1f2937').font('Helvetica').fontSize(9).text(formatCurrency(invoice.taxAmount), summaryValX, currentY, { align: 'right', width: 100 });
   currentY += 18;
   
   doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(10).text('Grand Total:', summaryX, currentY);
-  doc.fillColor(themeColor).font('Helvetica-Bold').fontSize(11).text(formatCurrency(invoice.grandTotal), summaryValX, currentY - 1, { align: 'right', width: 80 });
+  doc.fillColor(themeColor).font('Helvetica-Bold').fontSize(11).text(formatCurrency(invoice.grandTotal), summaryValX, currentY - 1, { align: 'right', width: 100 });
   
   // Note/T&C
-  currentY += 50;
+  currentY += 30;
   doc.fillColor('#4b5563').font('Helvetica-Bold').fontSize(9).text('Notes:', 50, currentY);
   currentY += 14;
   doc.font('Helvetica').fontSize(8).fillColor('#6b7280');
   doc.text(invoice.notes || 'Thank you for your business!', 50, currentY, { width: 495.28 });
   
-  currentY += 24;
+  currentY += 18;
   doc.font('Helvetica-Bold').fontSize(8).fillColor('#6b7280').text('Terms & Conditions:', 50, currentY);
   doc.font('Helvetica').fontSize(7).fillColor('#9ca3af');
   doc.text('1. Payment is due within the stipulated time frame.', 50, currentY + 12, { width: 495.28 });
   doc.text('2. Interest of 18% p.a. will be charged for payments delayed beyond the due date.', 50, currentY + 20, { width: 495.28 });
   
-  drawFooter(doc, org);
+  // Resolve footer text from org, sanitizing Cyberbells if present
+  let footerText = (org.settings && org.settings.footerText) || 'Powered by TrackBells';
+  if (footerText.includes('Cyberbells')) {
+    footerText = footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
+  }
+
+  // Draw Dynamic Footer immediately below terms
+  currentY += 45;
+  doc.moveTo(50, currentY).lineTo(545.28, currentY).strokeColor('#e5e7eb').lineWidth(1).stroke();
+  
+  currentY += 10;
+  doc.fillColor('#9ca3af').fontSize(8).font('Helvetica');
+  doc.text(footerText, 50, currentY, { width: 350 });
+  doc.text('Authorized Signatory', 400, currentY, { width: 145, align: 'right' });
 };

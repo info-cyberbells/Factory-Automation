@@ -3,7 +3,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import API, { financeAPI } from '../../services/api';
 import {
   HiOutlineDocumentAdd, HiOutlinePlus, HiOutlineTrash,
-  HiOutlineRefresh, HiOutlineX, HiOutlineDownload, HiOutlineEye
+  HiOutlineRefresh, HiOutlineX, HiOutlineDownload, HiOutlineEye,
+  HiOutlineSearch
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -11,6 +12,7 @@ const InvoiceGenerator = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form State
   const [clientName, setClientName] = useState('');
@@ -125,25 +127,56 @@ const InvoiceGenerator = () => {
   };
 
   const handleDownloadPDF = async (id, invNum) => {
+    const toastId = toast.loading('Generating PDF...');
     try {
-      toast.loading('Generating PDF...', { id: 'pdf-toast' });
-      const response = await API.get(`/finance/sales-invoices/${id}/pdf`, { responseType: 'blob' });
+      const response = await API.get(`/finance/sales-invoices/${id}/pdf?t=${Date.now()}`, { responseType: 'blob' });
       
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `Invoice_${invNum}.pdf`);
       document.body.appendChild(link);
       link.click();
       
-      link.parentNode.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(url);
       
-      toast.success('PDF downloaded successfully!', { id: 'pdf-toast' });
+      toast.success('PDF downloaded successfully!', { id: toastId });
     } catch (error) {
-      toast.error('Failed to download PDF', { id: 'pdf-toast' });
+      console.error('PDF download error:', error);
+      toast.error('Failed to download PDF', { id: toastId });
     }
   };
+
+  const handleDeleteInvoice = async (id, invNum) => {
+    if (!window.confirm(`Are you sure you want to delete Invoice ${invNum}?`)) return;
+    try {
+      toast.loading('Deleting invoice...', { id: 'delete-toast' });
+      await financeAPI.deleteSalesInvoice(id);
+      toast.success('Invoice deleted successfully', { id: 'delete-toast' });
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to delete invoice', { id: 'delete-toast' });
+    }
+  };
+
+  const filteredInvoices = invoices.filter(inv => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    const invoiceNo = (inv.invoiceNumber || '').toLowerCase();
+    const clientName = (inv.clientName || '').toLowerCase();
+    const subtotal = String(inv.subtotal || '');
+    const taxAmount = String(inv.taxAmount || '');
+    const grandTotal = String(inv.grandTotal || '');
+    
+    return invoiceNo.includes(query) || 
+           clientName.includes(query) || 
+           subtotal.includes(query) || 
+           taxAmount.includes(query) || 
+           grandTotal.includes(query);
+  });
 
   return (
     <DashboardLayout pageTitle="Invoice Generator">
@@ -156,6 +189,25 @@ const InvoiceGenerator = () => {
             <HiOutlinePlus /> Create Client Invoice
           </button>
         </div>
+      </div>
+
+      {/* Search Input Bar */}
+      <div style={{ position: 'relative', marginBottom: '20px', maxWidth: '400px' }}>
+        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7a99', display: 'flex', alignItems: 'center' }}>
+          <HiOutlineSearch size={18} />
+        </span>
+        <input 
+          className="form-input" 
+          value={searchQuery} 
+          onChange={e => setSearchQuery(e.target.value)} 
+          placeholder="Search by client name, invoice number, or price..." 
+          style={{ width: '100%', paddingLeft: '38px', height: '36px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#6b7a99', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <HiOutlineX size={16} />
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -173,14 +225,14 @@ const InvoiceGenerator = () => {
               </tr>
             </thead>
             <tbody>
-              {invoices.length === 0 ? (
+              {filteredInvoices.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No client invoices generated yet. Click "Create Client Invoice" to get started!
+                    {searchQuery ? 'No invoices match your search criteria.' : 'No client invoices generated yet. Click "Create Client Invoice" to get started!'}
                   </td>
                 </tr>
               ) : (
-                invoices.map(inv => (
+                filteredInvoices.map(inv => (
                   <tr key={inv._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                     <td style={tdStyle}><span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{inv.invoiceNumber}</span></td>
                     <td style={tdStyle}>{inv.clientName}</td>
@@ -189,13 +241,22 @@ const InvoiceGenerator = () => {
                     <td style={tdStyle}>₹{inv.taxAmount.toFixed(2)}</td>
                     <td style={{ ...tdStyle, color: '#3b82f6', fontWeight: 700 }}>₹{inv.grandTotal.toFixed(2)}</td>
                     <td style={tdStyle}>
-                      <button 
-                        className="btn btn-secondary btn-sm" 
-                        onClick={() => handleDownloadPDF(inv._id, inv.invoiceNumber)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 8px', fontSize: '0.75rem', height: '28px' }}
-                      >
-                        <HiOutlineDownload /> PDF
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                          onClick={() => handleDownloadPDF(inv._id, inv.invoiceNumber)}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px', height: '28px', width: '28px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer' }}
+                          title="Download Invoice PDF"
+                        >
+                          <HiOutlineDownload />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteInvoice(inv._id, inv.invoiceNumber)}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px', height: '28px', width: '28px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '6px', cursor: 'pointer' }}
+                          title="Delete Invoice"
+                        >
+                          <HiOutlineTrash />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

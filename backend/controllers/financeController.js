@@ -136,8 +136,8 @@ exports.getPOPDF = async (req, res, next) => {
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=PurchaseOrder_${po.poNumber}.pdf`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename=PurchaseOrder_${po.poNumber}.pdf`);
 
     doc.pipe(res);
     generatePurchaseOrderPDF(doc, po, org);
@@ -226,12 +226,28 @@ exports.getSalesInvoicePDF = async (req, res, next) => {
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=Invoice_${invoice.invoiceNumber}.pdf`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoiceNumber}.pdf`);
 
     doc.pipe(res);
     generateSalesInvoicePDF(doc, invoice, org);
     doc.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a sales invoice
+// @route   DELETE /api/finance/sales-invoices/:id
+// @access  Private
+exports.deleteSalesInvoice = async (req, res, next) => {
+  try {
+    const invoice = await SalesInvoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Sales Invoice not found' });
+    }
+    await invoice.deleteOne();
+    res.status(200).json({ success: true, message: 'Sales Invoice deleted successfully' });
   } catch (error) {
     next(error);
   }
