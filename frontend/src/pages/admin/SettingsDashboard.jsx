@@ -17,7 +17,7 @@ const ROLE_OPTIONS = [
 const SettingsDashboard = () => {
   const { user } = useAuth();
   const { settings, updateSettings, reloadSettings } = useOrg();
-  
+
   const [activeTab, setActiveTab] = useState('branding');
   const [saving, setSaving] = useState(false);
 
@@ -133,7 +133,7 @@ const SettingsDashboard = () => {
 
   const handleResetDefaults = () => {
     if (!window.confirm('Are you sure you want to reset all branding settings and menus to defaults?')) return;
-     setBrandName('TrackBells ERP');
+    setBrandName('TrackBells ERP');
     setBrandSubtitle('Factory Automation');
     setLogo('/logo.png');
     setThemeColor('#f97316');
@@ -166,12 +166,12 @@ const SettingsDashboard = () => {
   return (
     <DashboardLayout pageTitle="Workspace Configuration">
       <div style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '40px' }}>
-        
+
         {/* TABS NAVBAR */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '28px', borderBottom: '1px solid var(--border)', paddingBottom: '8px', overflowX: 'auto' }}>
           {user?.role === 'super_admin' && (
-            <button 
-              onClick={() => setActiveTab('security')} 
+            <button
+              onClick={() => setActiveTab('security')}
               style={{
                 padding: '10px 20px', borderRadius: '8px', border: 'none',
                 background: activeTab === 'security' ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
@@ -182,8 +182,8 @@ const SettingsDashboard = () => {
               🛡️ Security & Compliance
             </button>
           )}
-          <button 
-            onClick={() => setActiveTab('branding')} 
+          <button
+            onClick={() => setActiveTab('branding')}
             style={{
               padding: '10px 20px', borderRadius: '8px', border: 'none',
               background: activeTab === 'branding' ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
@@ -193,8 +193,8 @@ const SettingsDashboard = () => {
           >
             🎨 Branding & Theme
           </button>
-          <button 
-            onClick={() => setActiveTab('menus')} 
+          <button
+            onClick={() => setActiveTab('menus')}
             style={{
               padding: '10px 20px', borderRadius: '8px', border: 'none',
               background: activeTab === 'menus' ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
@@ -266,7 +266,7 @@ const SettingsDashboard = () => {
               <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 🏢 Organization Branding
               </h3>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '28px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div className="form-group">
@@ -452,7 +452,7 @@ const tdCellStyle = {
 };
 
 const ToggleSwitch = ({ checked, onChange }) => (
-  <div 
+  <div
     onClick={onChange}
     style={{
       width: '40px', height: '22px', background: checked ? 'var(--primary, #f97316)' : 'var(--bg-input, #e2e8f0)',
