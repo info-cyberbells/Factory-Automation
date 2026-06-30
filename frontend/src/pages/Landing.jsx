@@ -9,6 +9,23 @@ import { useOrg } from '../context/OrgContext';
 import { supportAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
+const getImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) {
+    const apiURL = process.env.REACT_APP_API_URL;
+    if (apiURL) {
+      const base = apiURL.endsWith('/api') ? apiURL : (apiURL.endsWith('/api/') ? apiURL.slice(0, -1) : `${apiURL}/api`);
+      return `${base}${url}`;
+    }
+    if (window.location.port) {
+      return `${window.location.protocol}//${window.location.hostname}:9898${url}`;
+    } else {
+      return `${window.location.origin}/api${url}`;
+    }
+  }
+  return url;
+};
+
 const Landing = () => {
   const { settings } = useOrg();
   const [isSupportOpen, setIsSupportOpen] = useState(false);
