@@ -327,7 +327,7 @@ const SettingsDashboard = () => {
                     padding: logo && (logo.startsWith('http') || logo.startsWith('/') || logo.startsWith('data:')) && !logo.includes('logo.png') ? '4px' : '0'
                   }}>
                     {logo && (logo.startsWith('http') || logo.startsWith('/') || logo.startsWith('data:')) ? (
-                      <img src={logo} alt="Logo" style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '2px', objectFit: 'contain' }} />
+                      <img src={getImageUrl(logo)} alt="Logo" style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '2px', objectFit: 'contain' }} />
                     ) : (
                       logo || '🏭'
                     )}

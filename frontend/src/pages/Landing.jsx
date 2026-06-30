@@ -89,7 +89,7 @@ const Landing = () => {
                 fontSize: '20px'
               }}>
                 {settings?.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:')) ? (
-                  <img src={settings.logo} alt="Logo" style={{ maxHeight: '24px', maxWidth: '24px', borderRadius: '2px' }} />
+                  <img src={getImageUrl(settings.logo)} alt="Logo" style={{ maxHeight: '24px', maxWidth: '24px', borderRadius: '2px' }} />
                 ) : (
                   settings?.logo || '🏭'
                 )}
