@@ -28,11 +28,11 @@ router.route('/users')
 
 router.route('/users/:id')
   .get(authorize('super_admin', 'admin'), getUser)
-  .put(authorize('super_admin'), updateUser)
-  .delete(authorize('super_admin'), deleteUser);
+  .put(authorize('super_admin', 'admin'), updateUser)
+  .delete(authorize('super_admin', 'admin'), deleteUser);
 
 // Role & Status actions
-router.put('/users/:id/role', authorize('super_admin'), updateUserRole);
+router.put('/users/:id/role', authorize('super_admin', 'admin'), updateUserRole);
 router.put('/users/:id/status', authorize('super_admin', 'admin'), toggleUserStatus);
 
 module.exports = router;

@@ -387,7 +387,7 @@ const UserManagement = () => {
                       }}>{u.isActive ? 'Active' : 'Inactive'}</span>
                     </td>
                     <td style={tdStyle}><span style={{ color: 'var(--text-dim)', fontSize: '0.82rem' }}>{formatDate(u.lastLogin)}</span></td>
-                    <td style={{ ...tdStyle, display: 'flex', gap: '6px' }}>
+                    <td style={{ ...tdStyle, display: 'flex', gap: '8px', alignItems: 'center', minHeight: '58px' }}>
                       {!isCurrentUser && (
                         <>
                           <ActionBtn icon={<HiOutlinePencil />} title="Edit User" color="#3b82f6"
@@ -398,8 +398,8 @@ const UserManagement = () => {
                             title={u.isActive ? 'Deactivate' : 'Activate'}
                             color={u.isActive ? '#f97316' : '#22c55e'}
                             onClick={() => handleToggleStatus(u._id)} />
-                          {(
-                            (currentUser?.role === 'super_admin' && u.role !== 'super_admin') ||
+                           {(
+                            ((currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && u.role !== 'super_admin') ||
                             (currentUser?.email === process.env.REACT_APP_PLATFORM_ADMIN_EMAIL)
                           ) && (
                             <ActionBtn icon={<HiOutlineTrash />} title="Delete" color="#ef4444"
@@ -436,9 +436,8 @@ const UserManagement = () => {
 
       {/* ===== CREATE USER MODAL ===== */}
       {showModal && (
-        <ModalOverlay onClose={() => setShowModal(false)}>
-          <div style={{ maxWidth: '520px', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <ModalOverlay onClose={() => setShowModal(false)} maxWidth="520px">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.3rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 👤 Create New User
               </h3>
@@ -586,52 +585,50 @@ const UserManagement = () => {
                 </button>
               </div>
             </form>
-          </div>
         </ModalOverlay>
       )}
 
       {/* ===== CHANGE ROLE MODAL ===== */}
       {showRoleModal && selectedUser && (
-        <ModalOverlay onClose={() => setShowRoleModal(false)}>
-          <div style={{ maxWidth: '420px', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+        <ModalOverlay onClose={() => setShowRoleModal(false)} maxWidth="420px">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.3rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                 🛡️ Change Role
               </h3>
-              <button onClick={() => setShowRoleModal(false)} style={{ background: 'none', border: 'none', color: '#6b7a99', fontSize: '1.4rem', cursor: 'pointer' }}><HiOutlineX /></button>
+              <button onClick={() => setShowRoleModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#ef4444'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}><HiOutlineX /></button>
             </div>
 
             <div style={{
-              padding: '14px', borderRadius: '10px', marginBottom: '20px',
-              background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.12)'
+              padding: '18px 20px', borderRadius: '12px', marginBottom: '24px',
+              background: 'var(--bg-input)', border: '1px solid var(--border)'
             }}>
-              <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.95rem' }}>{selectedUser.name}</div>
-              <div style={{ color: '#6b7a99', fontSize: '0.82rem' }}>{selectedUser.email}</div>
-              <div style={{ marginTop: '6px' }}>
+              <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '1.05rem', marginBottom: '2px' }}>{selectedUser.name}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '10px' }}>{selectedUser.email}</div>
+              <div>
                 <span style={{
-                  padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem',
-                  background: `${getRoleInfo(selectedUser.role).color}12`,
+                  padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem',
+                  background: `${getRoleInfo(selectedUser.role).color}15`,
                   color: getRoleInfo(selectedUser.role).color, fontWeight: 600
                 }}>Current: {getRoleInfo(selectedUser.role).label}</span>
               </div>
             </div>
 
-            <label className="form-label">Select Base Role</label>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>SELECT BASE ROLE</label>
             <select className="form-input" value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              style={{ cursor: 'pointer', marginBottom: '20px' }}>
-              {ROLES.map(r => (
-                <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
+              style={{ cursor: 'pointer', marginBottom: '24px', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-input)', border: '1px solid var(--border)', color: 'var(--text-primary)', width: '100%', outline: 'none' }}>
+              {ROLES.filter(r => r.value !== 'super_admin').map(r => (
+                <option key={r.value} value={r.value}>{r.emoji} &nbsp; {r.label}</option>
               ))}
             </select>
 
             {newRole === 'user' && (
-              <div style={{ marginBottom: '20px' }}>
-                <label className="form-label">Assign Permissions</label>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>ASSIGN PERMISSIONS</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                   {PERMISSIONS.map(p => (
                     <label key={p.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input type="checkbox" style={{ accentColor: '#3b82f6', width: '16px', height: '16px' }}
+                      <input type="checkbox" style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
                         checked={newPermissions.includes(p.value)}
                         onChange={(e) => {
                           const newPerms = e.target.checked 
@@ -647,36 +644,59 @@ const UserManagement = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setShowRoleModal(false)}>Cancel</button>
-              <button className="btn btn-accent" onClick={handleRoleChange}>Update Role</button>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '12px' }}>
+              <button type="button" style={{
+                padding: '10px 24px', background: 'transparent', border: '1px solid var(--border)',
+                borderRadius: '10px', color: 'var(--text-secondary)', fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s'
+              }} onClick={() => setShowRoleModal(false)}
+              onMouseOver={e => {
+                e.currentTarget.style.background = 'var(--bg-input)';
+                e.currentTarget.style.borderColor = 'var(--text-muted)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = 'var(--border)';
+              }}>Cancel</button>
+              
+              <button type="button" style={{
+                padding: '10px 24px', background: 'var(--primary)', border: 'none',
+                borderRadius: '10px', color: '#ffffff', fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px var(--primary-glow)'
+              }} onClick={handleRoleChange}
+              onMouseOver={e => {
+                e.currentTarget.style.opacity = '0.9';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.transform = 'none';
+              }}>Update Role</button>
             </div>
-          </div>
         </ModalOverlay>
       )}
 
       {/* Edit User Modal */}
       {showEditModal && (
-        <ModalOverlay onClose={() => setShowEditModal(false)}>
-          <div style={{ maxWidth: '520px', width: '100%', padding: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <ModalOverlay onClose={() => setShowEditModal(false)} maxWidth="520px">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.4rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                 Edit Profile
               </h3>
-              <button onClick={() => setShowEditModal(false)} style={{ background: 'none', border: 'none', color: '#6b7a99', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#ef4444'} onMouseOut={e => e.currentTarget.style.color = '#6b7a99'}><HiOutlineX /></button>
+              <button onClick={() => setShowEditModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.4rem', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#ef4444'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}><HiOutlineX /></button>
             </div>
 
             {/* Avatar Header */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px',
-              padding: '24px', background: 'linear-gradient(145deg, rgba(59,130,246,0.08), rgba(168,85,247,0.04))',
-              borderRadius: '16px', border: '1px solid rgba(59,130,246,0.1)'
+              padding: '24px', background: 'var(--bg-input)',
+              borderRadius: '16px', border: '1px solid var(--border)'
             }}>
               <div style={{
                 width: '70px', height: '70px', borderRadius: '20px',
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.8rem', fontWeight: 700, color: '#ffffff', boxShadow: '0 8px 16px rgba(59,130,246,0.2)',
+                fontSize: '1.8rem', fontWeight: 700, color: '#ffffff', boxShadow: '0 8px 16px var(--primary-glow)',
                 overflow: 'hidden'
               }}>
                 {editData.profileImage ? (
@@ -686,49 +706,72 @@ const UserManagement = () => {
                 )}
               </div>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{editData.name || 'User'}</h4>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 700 }}>{editData.name || 'User'}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Update user details and contact info</p>
               </div>
             </div>
 
-            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 500, letterSpacing: '0.5px' }}>FULL NAME *</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>FULL NAME *</label>
                   <input type="text" className="form-input" value={editData.name}
                     onChange={(e) => setEditData({ ...editData, name: e.target.value })} required 
-                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)' }} />
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }} />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 500, letterSpacing: '0.5px' }}>EMAIL ADDRESS *</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>EMAIL ADDRESS *</label>
                   <input type="email" className="form-input" value={editData.email}
                     onChange={(e) => setEditData({ ...editData, email: e.target.value })} required 
-                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)' }} />
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }} />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 500, letterSpacing: '0.5px' }}>PHONE NUMBER</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>PHONE NUMBER</label>
                   <input type="text" className="form-input" value={editData.phone}
                     onChange={(e) => setEditData({ ...editData, phone: e.target.value })} 
-                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)' }} />
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }} />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 500, letterSpacing: '0.5px' }}>DEPARTMENT</label>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', display: 'block', fontWeight: 600, letterSpacing: '0.5px' }}>DEPARTMENT</label>
                   <input type="text" className="form-input" value={editData.department}
                     onChange={(e) => setEditData({ ...editData, department: e.target.value })} 
-                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)' }} />
+                    style={{ background: 'var(--bg-input)', borderColor: 'var(--border)', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }} />
                 </div>
               </div>
               
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}
-                  style={{ padding: '10px 24px', border: 'none' }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}
-                  style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', border: 'none', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
+                <button type="button" style={{
+                  padding: '10px 24px', background: 'transparent', border: '1px solid var(--border)',
+                  borderRadius: '10px', color: 'var(--text-secondary)', fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.2s'
+                }} onClick={() => setShowEditModal(false)}
+                onMouseOver={e => {
+                  e.currentTarget.style.background = 'var(--bg-input)';
+                  e.currentTarget.style.borderColor = 'var(--text-muted)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}>Cancel</button>
+                
+                <button type="submit" disabled={submitting}
+                  style={{
+                    padding: '10px 24px', background: 'var(--primary)', border: 'none',
+                    borderRadius: '10px', color: '#ffffff', fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px var(--primary-glow)'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.opacity = '0.9';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.opacity = '1';
+                    e.currentTarget.style.transform = 'none';
+                  }}>
                   {submitting ? 'Saving Changes...' : 'Save Changes'}
                 </button>
               </div>
             </form>
-          </div>
         </ModalOverlay>
       )}
     </DashboardLayout>
@@ -740,12 +783,23 @@ const tdStyle = { padding: '12px 16px', fontSize: '0.85rem', color: 'var(--text-
 
 const ActionBtn = ({ icon, title, color, onClick }) => (
   <button onClick={onClick} title={title} style={{
-    width: '32px', height: '32px', borderRadius: '8px',
+    width: '34px', height: '34px', borderRadius: '10px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'transparent', border: `1px solid var(--border)`, color,
-    cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s'
-  }} onMouseOver={e => e.currentTarget.style.background = `var(--bg-input)`}
-     onMouseOut={e => e.currentTarget.style.background = `transparent`}
+    background: `${color}0e`, border: `1px solid ${color}24`, color,
+    cursor: 'pointer', fontSize: '1.05rem', transition: 'all 0.2s',
+    boxShadow: `0 2px 4px rgba(0,0,0,0.02)`
+  }} onMouseOver={e => {
+       e.currentTarget.style.background = `${color}1b`;
+       e.currentTarget.style.borderColor = `${color}45`;
+       e.currentTarget.style.transform = 'translateY(-1px)';
+       e.currentTarget.style.boxShadow = `0 4px 8px ${color}15`;
+     }}
+     onMouseOut={e => {
+       e.currentTarget.style.background = `${color}0e`;
+       e.currentTarget.style.borderColor = `${color}24`;
+       e.currentTarget.style.transform = 'none';
+       e.currentTarget.style.boxShadow = `0 2px 4px rgba(0,0,0,0.02)`;
+     }}
   >{icon}</button>
 );
 
@@ -759,7 +813,7 @@ const PagBtn = ({ children, active, disabled, onClick }) => (
   }}>{children}</button>
 );
 
-const ModalOverlay = ({ children, onClose }) => (
+const ModalOverlay = ({ children, onClose, maxWidth = '640px' }) => (
   <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
@@ -770,7 +824,7 @@ const ModalOverlay = ({ children, onClose }) => (
       background: 'var(--bg-card)',
       border: '1px solid var(--border)', borderRadius: '20px',
       padding: '32px', maxHeight: '90vh', overflowY: 'auto',
-      animation: 'fadeInUp 0.3s ease', width: '100%', maxWidth: '640px'
+      animation: 'fadeInUp 0.3s ease', width: '100%', maxWidth
     }}>{children}</div>
   </div>
 );

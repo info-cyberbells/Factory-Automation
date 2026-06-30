@@ -9,10 +9,14 @@ const {
   resendReverifyOTP,
   createOrganization,
   getOrgSettings,
-  updateOrgSettings
+  updateOrgSettings,
+  checkMobileAccessStatus
 } = require('../controllers/orgController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
+
+// Public route for mobile verification (No Auth required)
+router.get('/mobile-check', checkMobileAccessStatus);
 
 router.use(protect);
 

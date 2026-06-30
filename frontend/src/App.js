@@ -156,31 +156,31 @@ function App() {
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/gate-guard" element={
-              <RoleRoute roles={['super_admin', 'admin', 'gate_guard']}><GateGuardDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'gate_guard']} permission="gate_entry"><GateGuardDashboard /></RoleRoute>
             } />
             <Route path="/supervisor" element={
-              <RoleRoute roles={['super_admin', 'admin', 'supervisor']}><SupervisorDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'supervisor']} permission="production"><SupervisorDashboard /></RoleRoute>
             } />
             <Route path="/quality" element={
-              <RoleRoute roles={['super_admin', 'admin', 'quality_checker']}><QualityDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'quality_checker']} permission="production"><QualityDashboard /></RoleRoute>
             } />
             <Route path="/quality-requests" element={
-              <RoleRoute roles={['super_admin', 'admin', 'quality_checker']}><QCInventoryRequests /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'quality_checker']} permission="production"><QCInventoryRequests /></RoleRoute>
             } />
             <Route path="/store" element={
-              <RoleRoute roles={['super_admin', 'admin', 'store_manager']}><StoreDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'store_manager']} permission="store"><StoreDashboard /></RoleRoute>
             } />
             <Route path="/sales" element={
-              <RoleRoute roles={['super_admin', 'admin', 'sales']}><SalesDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'sales']} permission="orders"><SalesDashboard /></RoleRoute>
             } />
             <Route path="/orders" element={
-              <RoleRoute roles={['super_admin', 'admin', 'sales']}><OrderDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'sales']} permission="orders"><OrderDashboard /></RoleRoute>
             } />
             <Route path="/finance" element={
-              <RoleRoute roles={['super_admin', 'admin', 'sales']}><FinanceDashboard /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'sales']} permission="finance"><FinanceDashboard /></RoleRoute>
             } />
             <Route path="/invoice-generator" element={
-              <RoleRoute roles={['super_admin', 'admin', 'sales', 'store_manager']}><InvoiceGenerator /></RoleRoute>
+              <RoleRoute roles={['super_admin', 'admin', 'sales', 'store_manager']} permission="finance"><InvoiceGenerator /></RoleRoute>
             } />
             <Route path="/users" element={
               <RoleRoute roles={['super_admin', 'admin']}><UserManagement /></RoleRoute>

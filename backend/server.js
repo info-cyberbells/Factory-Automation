@@ -123,6 +123,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(morgan('dev'));
 
+// Mobile Access Policy Middleware
+app.use(require('./middleware/mobileCheck'));
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));

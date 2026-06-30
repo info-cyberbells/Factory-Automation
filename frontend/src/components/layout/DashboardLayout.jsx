@@ -357,25 +357,28 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
     });
   }
 
+  const hasOrdersAccess = ['super_admin', 'admin', 'sales'].includes(user?.role) || (user?.role === 'user' && user?.permissions?.includes('orders'));
+  const hasFinanceAccess = ['super_admin', 'admin', 'sales'].includes(user?.role) || (user?.role === 'user' && user?.permissions?.includes('finance'));
+  const hasInvoiceAccess = ['super_admin', 'admin', 'sales', 'store_manager'].includes(user?.role) || (user?.role === 'user' && (user?.permissions?.includes('finance') || user?.permissions?.includes('store')));
+
   // Inject Sales Orders menu dynamically if not present for authorized roles
-  if (['super_admin', 'admin', 'sales'].includes(user?.role) && !rawMenus.some(m => m.key === 'orders')) {
+  if (hasOrdersAccess && !rawMenus.some(m => m.key === 'orders')) {
     rawMenus.push({
       key: 'orders',
       label: 'Client Billing & SO',
       icon: 'HiOutlineShoppingCart',
       path: '/orders',
       visible: true,
-      roles: ['super_admin', 'admin', 'sales']
+      roles: ['super_admin', 'admin', 'sales', 'user']
     });
   }
 
   // Inject Finance & Purchase menu dynamically if not present for authorized roles
-  if (['super_admin', 'admin', 'sales'].includes(user?.role)) {
+  if (hasFinanceAccess) {
     const finMenu = rawMenus.find(m => m.key === 'finance');
     if (finMenu) {
-      if (finMenu.roles && !finMenu.roles.includes('sales')) {
-        finMenu.roles.push('sales');
-      }
+      if (finMenu.roles && !finMenu.roles.includes('sales')) finMenu.roles.push('sales');
+      if (finMenu.roles && !finMenu.roles.includes('user')) finMenu.roles.push('user');
     } else {
       rawMenus.push({
         key: 'finance',
@@ -383,17 +386,17 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
         icon: 'HiOutlineDocumentReport',
         path: '/finance',
         visible: true,
-        roles: ['super_admin', 'admin', 'sales']
+        roles: ['super_admin', 'admin', 'sales', 'user']
       });
     }
   }
 
   // Inject Invoice Generator menu dynamically if not present for authorized roles
-  if (['super_admin', 'admin', 'sales', 'store_manager'].includes(user?.role)) {
+  if (hasInvoiceAccess) {
     const genMenu = rawMenus.find(m => m.key === 'invoiceGenerator');
     if (genMenu) {
       if (genMenu.roles) {
-        ['sales', 'store_manager'].forEach(r => {
+        ['sales', 'store_manager', 'user'].forEach(r => {
           if (!genMenu.roles.includes(r)) genMenu.roles.push(r);
         });
       }
@@ -404,7 +407,7 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
         icon: 'HiOutlineDocumentText',
         path: '/invoice-generator',
         visible: true,
-        roles: ['super_admin', 'admin', 'sales', 'store_manager']
+        roles: ['super_admin', 'admin', 'sales', 'store_manager', 'user']
       });
     }
   }
@@ -426,6 +429,26 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       if (item.roles && item.roles.length > 0) {
         // Platform admin and Organisation admin get access to everything
         if (['super_admin', 'admin'].includes(user?.role)) return true;
+        
+        // Custom permissions check for 'user' role
+        if (user?.role === 'user' && user?.permissions) {
+          const permMap = {
+            gateGuard: 'gate_entry',
+            supervisor: 'production',
+            qualityChecker: 'production',
+            qcInventoryRequests: 'production',
+            storeManager: 'store',
+            sales: 'orders',
+            orders: 'orders',
+            finance: 'finance',
+            invoiceGenerator: 'finance',
+          };
+          const reqPerm = permMap[item.key];
+          if (reqPerm) {
+            return user.permissions.includes(reqPerm);
+          }
+        }
+
         return item.roles.includes(user?.role);
       }
       return true;
@@ -564,8 +587,8 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
           ) : (
             <>
               {settings.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) ? (
-                <div className="logo">
-                  <img src={getImageUrl(settings.logo)} alt="Logo" style={{ maxHeight: '36px', maxWidth: '36px', borderRadius: '4px' }} />
+                <div className="logo" style={{ background: '#ffffff', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={getImageUrl(settings.logo)} alt="Logo" style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '4px', objectFit: 'contain' }} />
                 </div>
               ) : (
                 <div className="logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -641,15 +664,16 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+              background: settings?.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) && !settings.logo.includes('logo.png') ? '#ffffff' : 'linear-gradient(135deg, var(--primary), var(--primary-light))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              padding: settings?.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) && !settings.logo.includes('logo.png') ? '4px' : '0'
             }}>
               {settings?.logo && (settings.logo.startsWith('http') || settings.logo.startsWith('/') || settings.logo.startsWith('data:') || settings.logo.startsWith('blob:')) ? (
-                <img src={getImageUrl(settings.logo)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getImageUrl(settings.logo)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
                 <span style={{ fontSize: '20px' }}>{settings?.logo || '🏭'}</span>
               )}

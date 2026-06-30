@@ -1,0 +1,1798 @@
+{
+  "info": {
+    "name": "TrackBells ERP API Collection",
+    "description": "Complete API Collection for TrackBells Factory Automation SaaS ERP (Authentication, SaaS Tenants, Finance, Operations, Inventory, Machinery, Gate Logs, and Support)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://trackbells.com/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication & Onboarding",
+      "item": [
+        {
+          "name": "Register New User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"supervisor\",\n  \"organizationId\": \"60c72b2f9b1d8a23d45f78a1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@trackbells.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Onboarding OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"neworg@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/onboard/send-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "onboard",
+                "send-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP & Create Org",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"neworg@example.com\",\n  \"otp\": \"123456\",\n  \"orgName\": \"New Factory Corp\",\n  \"contactPhone\": \"+919876543210\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/onboard/verify-org",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "onboard",
+                "verify-org"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"newsecurepassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password/:token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password",
+                ":token"
+              ],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "RESET_TOKEN_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Me (Profile)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"+919999999999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/update-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "update-profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"mynewpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "SaaS Organizations & Settings",
+      "item": [
+        {
+          "name": "Check Mobile Access Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/mobile-check?email=superadmin@trackbells.com",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "mobile-check"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "superadmin@trackbells.com"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Organization Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "settings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Organization Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brandName\": \"TrackBells ERP\",\n  \"brandSubtitle\": \"Factory Automation\",\n  \"logo\": \"/logo.png\",\n  \"themeColor\": \"#f97316\",\n  \"footerText\": \"Powered by TrackBells Services\",\n  \"allowMobileApp\": true,\n  \"disableScreenshots\": false,\n  \"requireBiometric\": true,\n  \"restrictCrossDepartment\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organizations/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "settings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All SaaS Tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create SaaS Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Star Connect\",\n  \"contactEmail\": \"contact@starconnect.com\",\n  \"contactPhone\": \"+918888888888\",\n  \"address\": \"Plot 12, Industrial Area, Noida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Organization",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ORG_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline Organization",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remark\": \"Incomplete company documents uploaded.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organizations/:id/decline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                ":id",
+                "decline"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ORG_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Force Reverification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/:id/force-reverify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                ":id",
+                "force-reverify"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ORG_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Reverification OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orgId\": \"ORG_ID_HERE\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organizations/reverify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "reverify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resend Reverification OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orgId\": \"ORG_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/organizations/resend-reverify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "resend-reverify-otp"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Finance & Invoicing",
+      "item": [
+        {
+          "name": "Get All Vendors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/vendors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "vendors"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nylon Polymer Suppliers\",\n  \"email\": \"sales@nylonpolymer.com\",\n  \"phone\": \"+919876543211\",\n  \"address\": \"Sector 62, Noida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/vendors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "vendors"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/pos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "pos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poNumber\": \"PO-2026-001\",\n  \"vendor\": \"Nylon Polymer Suppliers\",\n  \"items\": [\n    {\n      \"description\": \"Nylon Raw Pellets\",\n      \"quantity\": 500,\n      \"rate\": 120,\n      \"amount\": 60000\n    }\n  ],\n  \"subTotal\": 60000,\n  \"gstAmount\": 10800,\n  \"totalAmount\": 70800,\n  \"terms\": \"Deliver within 7 working days\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/pos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "pos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download PO PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/pos/:id/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "pos",
+                ":id",
+                "pdf"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PO_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Scan Invoice PDF (OCR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "CHOOSE_PDF_FILE_HERE"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/scan-invoice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "scan-invoice"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Scanned Invoices List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "invoices"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Client Sales Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/sales-invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "sales-invoices"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Client Sales Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientName\": \"Global Auto Industries\",\n  \"clientEmail\": \"billing@globalauto.com\",\n  \"clientPhone\": \"+919999999999\",\n  \"clientAddress\": \"B-42, Phase II, Okhla, New Delhi\",\n  \"gstin\": \"07AAAAA1111A1Z1\",\n  \"invoiceNumber\": \"INV-2026-004\",\n  \"dueDate\": \"2026-07-15\",\n  \"items\": [\n    {\n      \"description\": \"V-Belt Extrusion Row Section\",\n      \"quantity\": 2,\n      \"unitRate\": 45000,\n      \"taxRate\": 18,\n      \"total\": 106200\n    }\n  ],\n  \"subTotal\": 90000,\n  \"gstAmount\": 16200,\n  \"grandTotal\": 106200,\n  \"notes\": \"Thank you for doing business with TrackBells ERP!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/sales-invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "sales-invoices"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Sales Invoice PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/sales-invoices/:id/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "sales-invoices",
+                ":id",
+                "pdf"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "INVOICE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Sales Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/sales-invoices/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "sales-invoices",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "INVOICE_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gate Entry Logs",
+      "item": [
+        {
+          "name": "Get Gate Entries Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                "stats"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Gate Entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Gate Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "challanNo",
+                  "value": "CH-9876",
+                  "type": "text"
+                },
+                {
+                  "key": "vehicleNumber",
+                  "value": "DL-1C-A-1234",
+                  "type": "text"
+                },
+                {
+                  "key": "materialType",
+                  "value": "raw_material",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "250",
+                  "type": "text"
+                },
+                {
+                  "key": "unit",
+                  "value": "kg",
+                  "type": "text"
+                },
+                {
+                  "key": "invoiceFile",
+                  "type": "file",
+                  "src": "CHOOSE_PDF_OR_IMAGE_FILE_HERE"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Gate Entry Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ENTRY_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Gate Entry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleNumber\": \"HR-26-Z-9999\",\n  \"quantity\": 260\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ENTRY_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Gate Entry (Supervisor)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Verified materials match packing list.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/:id/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                ":id",
+                "verify"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ENTRY_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create GRN Handshake (Store Manager)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rackNumber\": \"Rack-A1\",\n  \"binNumber\": \"Bin-12\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/:id/create-grn",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                ":id",
+                "create-grn"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ENTRY_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Gate Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gate-entry/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "gate-entry",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ENTRY_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Factory Operations & Inventory",
+      "item": [
+        {
+          "name": "Get Inventory List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "inventory"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Inventory Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"EPDM Rubber Profiles\",\n  \"type\": \"raw_material\",\n  \"quantity\": 450,\n  \"unit\": \"kg\",\n  \"location\": \"Warehouse A\",\n  \"size\": \"Medium\",\n  \"description\": \"Primary material for V-belt extrusion core\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/inventory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "inventory"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Inventory Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 500,\n  \"location\": \"Warehouse B\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/inventory/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "inventory",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ITEM_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Inventory Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/inventory/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "inventory",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ITEM_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Plant Machines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/machines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "machines"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create New Machine",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Belt Extruder Machine\",\n  \"status\": \"working\",\n  \"remarks\": \"Tension and temperature calibrated\",\n  \"capacity\": \"250 meters/hour\",\n  \"modelNumber\": \"EXTR-300-X\",\n  \"powerRating\": \"22 kW\",\n  \"lastServiceDate\": \"2026-06-10\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/machines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "machines"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Machine Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"running\",\n  \"remarks\": \"Active on Belt Batch #42\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/machines/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "machines",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "MACHINE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Machine",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/machines/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "machines",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "MACHINE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Production Build Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/build-jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "build-jobs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Production Build Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"Heavy Duty Conveyor Belt V-4\",\n  \"orderQuantity\": 200,\n  \"productSize\": \"50 meters\",\n  \"estimatedDate\": \"2026-07-20\",\n  \"materialsUsed\": [\n    {\n      \"materialName\": \"EPDM Rubber Profiles\",\n      \"quantity\": 150,\n      \"unit\": \"kg\"\n    }\n  ],\n  \"customFields\": [\n    {\n      \"label\": \"Fabric Reinforcement Layer\",\n      \"value\": \"Polyester-EP200\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/build-jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "build-jobs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Build Job Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"running\",\n  \"buildTime\": \"14:30\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/build-jobs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "build-jobs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "JOB_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Build to Store",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/build-jobs/:id/send-to-store",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "build-jobs",
+                ":id",
+                "send-to-store"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "JOB_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Receive Build Product (Store Manager)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/build-jobs/:id/receive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "build-jobs",
+                ":id",
+                "receive"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "JOB_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Quality Control Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/qc-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "qc-logs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Quality Control Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "batchNumber",
+                  "value": "BATCH-V4-08",
+                  "type": "text"
+                },
+                {
+                  "key": "inspector",
+                  "value": "Quality Officer",
+                  "type": "text"
+                },
+                {
+                  "key": "parameters",
+                  "value": "Tensile strength >= 25MPa, width 600mm",
+                  "type": "text"
+                },
+                {
+                  "key": "status",
+                  "value": "pass",
+                  "type": "text"
+                },
+                {
+                  "key": "defectsFound",
+                  "value": "none",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/qc-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "qc-logs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Quality Control Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"All tensile and width parameters validated. Released for shipment.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/qc-logs/:id/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "qc-logs",
+                ":id",
+                "verify"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QC_LOG_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete QC Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/qc-logs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "qc-logs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QC_LOG_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Shortage & Buy/Sale Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/shortage-buy-sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "shortage-buy-sales"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Shortage Buy/Sale Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"buy\",\n  \"materialName\": \"Polyester Thread Spools\",\n  \"quantity\": 40,\n  \"unit\": \"pcs\",\n  \"targetPrice\": 320,\n  \"supplier\": \"Fabric Core Loom Ltd\",\n  \"status\": \"requested\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/shortage-buy-sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "shortage-buy-sales"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Shortage Buy/Sale Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"actualPrice\": 310\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/operations/shortage-buy-sales/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "shortage-buy-sales",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "RECORD_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Shortage Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operations/shortage-buy-sales/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operations",
+                "shortage-buy-sales",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "RECORD_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

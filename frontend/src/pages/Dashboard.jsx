@@ -9,12 +9,22 @@ import SupervisorDashboard from './production/SupervisorDashboard';
 import QualityDashboard from './quality/QualityDashboard';
 import StoreDashboard from './store/StoreDashboard';
 import SalesDashboard from './sales/SalesDashboard';
+import FinanceDashboard from './finance/FinanceDashboard';
 
 const Dashboard = () => {
   const { user } = useAuth();
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Handle custom permissions for 'user' role
+  if (user.role === 'user' && user.permissions && user.permissions.length > 0) {
+    if (user.permissions.includes('production')) return <SupervisorDashboard />;
+    if (user.permissions.includes('gate_entry')) return <GateGuardDashboard />;
+    if (user.permissions.includes('store')) return <StoreDashboard />;
+    if (user.permissions.includes('orders')) return <SalesDashboard />;
+    if (user.permissions.includes('finance')) return <FinanceDashboard />;
   }
 
   // Render dashboard based on role

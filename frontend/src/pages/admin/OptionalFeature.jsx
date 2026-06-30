@@ -172,17 +172,18 @@ const OptionalFeature = () => {
                   width: '120px',
                   height: '120px',
                   borderRadius: '24px',
-                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  background: logoPreview && (logoPreview.startsWith('http') || logoPreview.startsWith('/') || logoPreview.startsWith('data:') || logoPreview.startsWith('blob:')) && !logoPreview.includes('logo.png') ? '#ffffff' : 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
                   overflow: 'hidden',
-                  marginBottom: '16px'
+                  marginBottom: '16px',
+                  padding: logoPreview && (logoPreview.startsWith('http') || logoPreview.startsWith('/') || logoPreview.startsWith('data:') || logoPreview.startsWith('blob:')) && !logoPreview.includes('logo.png') ? '12px' : '0'
                 }}>
                   {logoPreview ? (
                     logoPreview.startsWith('http') || logoPreview.startsWith('/') || logoPreview.startsWith('data:') || logoPreview.startsWith('blob:') ? (
-                      <img src={getImageUrl(logoPreview)} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={getImageUrl(logoPreview)} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : (
                       <span style={{ fontSize: '3.5rem' }}>{logoPreview}</span>
                     )

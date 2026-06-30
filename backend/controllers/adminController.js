@@ -87,8 +87,22 @@ exports.updateUserRole = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Tenant Isolation & Role Change Constraints
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
+      if (!user.organizationId || user.organizationId.toString() !== req.user.organizationId.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized to change this user\'s role' });
+      }
+      // Org admin cannot change user to super_admin or modify a super_admin
+      if (role === 'super_admin' || user.role === 'super_admin') {
+        return res.status(403).json({ success: false, message: 'Not authorized to assign or modify super_admin role' });
+      }
+    }
+
     if (role) user.role = role;
-    if (permissions) user.permissions = permissions;
+    if (permissions) {
+      user.permissions = permissions;
+      user.markModified('permissions');
+    }
 
     await user.save({ validateBeforeSave: true });
 
@@ -135,6 +149,13 @@ exports.deleteUser = async (req, res, next) => {
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Tenant Isolation
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
+      if (!user.organizationId || user.organizationId.toString() !== req.user.organizationId.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized to delete this user' });
+      }
+    }
 
     // Only Platform Admin can delete other Super Admins (Org Admins)
     if (user.role === 'super_admin' && req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
@@ -215,6 +236,13 @@ exports.updateUser = async (req, res, next) => {
     let user = await User.findById(req.params.id);
 
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Tenant Isolation
+    if (req.user.email !== process.env.PLATFORM_ADMIN_EMAIL) {
+      if (!user.organizationId || user.organizationId.toString() !== req.user.organizationId.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized to edit this user' });
+      }
+    }
 
     // Platform admin can edit anyone. Org admin can edit non-super-admins.
     if (user.role === 'super_admin' && req.user.email !== process.env.PLATFORM_ADMIN_EMAIL && req.user._id.toString() !== user._id.toString()) {

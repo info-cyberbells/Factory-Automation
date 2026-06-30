@@ -362,6 +362,11 @@ exports.getOrgSettings = async (req, res, next) => {
       }
     }
 
+    if (settings.disableScreenshots === undefined) { settings.disableScreenshots = true; needsSave = true; }
+    if (settings.requireBiometric === undefined) { settings.requireBiometric = true; needsSave = true; }
+    if (settings.restrictCrossDepartment === undefined) { settings.restrictCrossDepartment = true; needsSave = true; }
+    if (settings.allowMobileApp === undefined) { settings.allowMobileApp = false; needsSave = true; }
+
     if (needsSave) {
       org.settings = settings;
       await org.save();
@@ -393,7 +398,7 @@ exports.updateOrgSettings = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
-    const { brandName, brandSubtitle, logo, themeColor, footerText, menus } = req.body;
+    const { brandName, brandSubtitle, logo, themeColor, footerText, menus, disableScreenshots, requireBiometric, restrictCrossDepartment, allowMobileApp } = req.body;
 
     org.settings = {
       brandName: brandName || (org.settings && org.settings.brandName) || defaultSettings.brandName,
@@ -401,12 +406,56 @@ exports.updateOrgSettings = async (req, res, next) => {
       logo: logo || (org.settings && org.settings.logo) || defaultSettings.logo,
       themeColor: themeColor || (org.settings && org.settings.themeColor) || defaultSettings.themeColor,
       footerText: footerText || (org.settings && org.settings.footerText) || defaultSettings.footerText,
-      menus: menus || (org.settings && org.settings.menus) || defaultSettings.menus
+      menus: menus || (org.settings && org.settings.menus) || defaultSettings.menus,
+      disableScreenshots: disableScreenshots !== undefined ? disableScreenshots : (org.settings && org.settings.disableScreenshots !== undefined ? org.settings.disableScreenshots : true),
+      requireBiometric: requireBiometric !== undefined ? requireBiometric : (org.settings && org.settings.requireBiometric !== undefined ? org.settings.requireBiometric : true),
+      restrictCrossDepartment: restrictCrossDepartment !== undefined ? restrictCrossDepartment : (org.settings && org.settings.restrictCrossDepartment !== undefined ? org.settings.restrictCrossDepartment : true),
+      allowMobileApp: allowMobileApp !== undefined ? allowMobileApp : (org.settings && org.settings.allowMobileApp !== undefined ? org.settings.allowMobileApp : false)
     };
 
     await org.save();
 
     res.status(200).json({ success: true, data: org.settings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Check if mobile application access is allowed for an organization
+// @route   GET /api/organizations/mobile-check
+// @access  Public
+exports.checkMobileAccessStatus = async (req, res, next) => {
+  try {
+    const { orgId, email } = req.query;
+    let targetOrgId = orgId;
+
+    if (!targetOrgId && email) {
+      const User = require('../models/User');
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (user) {
+        targetOrgId = user.organizationId;
+      }
+    }
+
+    if (!targetOrgId) {
+      return res.status(400).json({ success: false, message: 'Organization ID or User Email is required' });
+    }
+
+    const org = await Organization.findById(targetOrgId);
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+
+    const settings = org.settings || {};
+    const allowMobileApp = settings.allowMobileApp !== undefined ? settings.allowMobileApp : false;
+
+    res.status(200).json({
+      success: true,
+      allowMobileApp,
+      message: allowMobileApp 
+        ? 'Mobile access is allowed' 
+        : 'Mobile access is disabled for this organization'
+    });
   } catch (error) {
     next(error);
   }

@@ -55,6 +55,12 @@ const SettingsDashboard = () => {
       setThemeColor(settings.themeColor || '#f97316');
       setFooterText(settings.footerText || '');
       setMenus(settings.menus ? JSON.parse(JSON.stringify(settings.menus)) : []);
+      setSecuritySettings({
+        disableScreenshots: settings.disableScreenshots !== undefined ? settings.disableScreenshots : true,
+        requireBiometric: settings.requireBiometric !== undefined ? settings.requireBiometric : true,
+        restrictCrossDepartment: settings.restrictCrossDepartment !== undefined ? settings.restrictCrossDepartment : true,
+        allowMobileApp: settings.allowMobileApp !== undefined ? settings.allowMobileApp : false
+      });
     }
   }, [settings]);
 
@@ -62,12 +68,23 @@ const SettingsDashboard = () => {
     setSecuritySettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSaveSecurity = () => {
+  const handleSaveSecurity = async () => {
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      await updateSettings({
+        ...settings,
+        disableScreenshots: securitySettings.disableScreenshots,
+        requireBiometric: securitySettings.requireBiometric,
+        restrictCrossDepartment: securitySettings.restrictCrossDepartment,
+        allowMobileApp: securitySettings.allowMobileApp
+      });
       toast.success('Global security policies applied successfully!');
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update security policies');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Menu Handlers
@@ -297,9 +314,20 @@ const SettingsDashboard = () => {
               <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc', border: '1px dashed var(--border)' }}>
                 <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px' }}>Sidebar Header Live Preview</h4>
                 <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid var(--border)', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', background: `linear-gradient(135deg, ${themeColor}, ${themeColor}aa)`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: logo && (logo.startsWith('http') || logo.startsWith('/') || logo.startsWith('data:')) && !logo.includes('logo.png') ? '#ffffff' : `linear-gradient(135deg, ${themeColor}, ${themeColor}aa)`,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    color: '#fff',
+                    padding: logo && (logo.startsWith('http') || logo.startsWith('/') || logo.startsWith('data:')) && !logo.includes('logo.png') ? '4px' : '0'
+                  }}>
                     {logo && (logo.startsWith('http') || logo.startsWith('/') || logo.startsWith('data:')) ? (
-                      <img src={logo} alt="Logo" style={{ maxHeight: '24px', maxWidth: '24px', borderRadius: '2px' }} />
+                      <img src={logo} alt="Logo" style={{ maxHeight: '32px', maxWidth: '32px', borderRadius: '2px', objectFit: 'contain' }} />
                     ) : (
                       logo || '🏭'
                     )}

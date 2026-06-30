@@ -81,6 +81,22 @@ const organizationSchema = new mongoose.Schema({
         { key: 'organizations', label: 'SaaS Tenants', icon: 'HiOutlineOfficeBuilding', path: '/admin/organizations', visible: true, roles: ['super_admin'] },
         { key: 'settings', label: 'Settings', icon: 'HiOutlineAdjustments', path: '/settings', visible: true, roles: ['super_admin', 'admin'] }
       ]
+    },
+    disableScreenshots: {
+      type: Boolean,
+      default: true
+    },
+    requireBiometric: {
+      type: Boolean,
+      default: true
+    },
+    restrictCrossDepartment: {
+      type: Boolean,
+      default: true
+    },
+    allowMobileApp: {
+      type: Boolean,
+      default: false
     }
   },
   createdAt: {
