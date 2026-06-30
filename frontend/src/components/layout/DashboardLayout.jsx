@@ -155,6 +155,20 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
   const fileInputRef = useRef(null);
   const [uploadingProfile, setUploadingProfile] = useState(false);
 
+  const sidebarRef = useRef(null);
+
+  // Restore sidebar scroll position on mount
+  useEffect(() => {
+    const savedScrollTop = sessionStorage.getItem('sidebar-scroll');
+    if (savedScrollTop && sidebarRef.current) {
+      sidebarRef.current.scrollTop = parseInt(savedScrollTop, 10);
+    }
+  }, []);
+
+  const handleSidebarScroll = (e) => {
+    sessionStorage.setItem('sidebar-scroll', e.target.scrollTop);
+  };
+
   const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -556,7 +570,11 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
       )}
 
       {/* SIDEBAR */}
-      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+      <aside 
+        ref={sidebarRef} 
+        onScroll={handleSidebarScroll} 
+        className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}
+      >
         <div className="sidebar-header" style={settings.logo?.includes('logo.png') ? { padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border)' } : {}}>
           {settings.logo && settings.logo.includes('logo.png') ? (
             <>
@@ -616,6 +634,9 @@ const DashboardLayout = ({ children, pageTitle = 'Dashboard' }) => {
                   className={`sidebar-item ${location.pathname === item.path ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
                   onClick={() => {
                     if (!item.disabled) {
+                      if (sidebarRef.current) {
+                        sessionStorage.setItem('sidebar-scroll', sidebarRef.current.scrollTop);
+                      }
                       navigate(item.path);
                       setIsMobileMenuOpen(false);
                     }
