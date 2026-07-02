@@ -96,7 +96,7 @@ const organizationSchema = new mongoose.Schema({
     },
     allowMobileApp: {
       type: Boolean,
-      default: false
+      default: true
     }
   },
   createdAt: {
