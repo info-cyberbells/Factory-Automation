@@ -210,21 +210,32 @@ connectDB().then(() => {
   Organization.find().then(orgs => {
     orgs.forEach(org => {
       let needsSave = false;
-      if (org.settings && org.settings.footerText && org.settings.footerText.includes('Cyberbells')) {
-        org.settings.footerText = org.settings.footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
-        needsSave = true;
-      }
       if (!org.settings) {
-        org.settings = {};
+        org.settings = {
+          brandName: 'TrackBells ERP',
+          brandSubtitle: 'Factory Automation',
+          logo: '/logo.png',
+          themeColor: '#f97316',
+          footerText: 'Powered by TrackBells',
+          allowMobileApp: true
+        };
         needsSave = true;
-      }
-      if (org.settings.allowMobileApp !== true) {
-        org.settings.allowMobileApp = true;
-        needsSave = true;
+      } else {
+        if (org.settings.footerText && org.settings.footerText.includes('Cyberbells')) {
+          org.settings.footerText = org.settings.footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
+          needsSave = true;
+        }
+        if (org.settings.allowMobileApp !== true) {
+          org.settings.allowMobileApp = true;
+          needsSave = true;
+        }
       }
       if (needsSave) {
+        org.markModified('settings');
         org.save().then(() => {
           console.log(`Updated organization settings in DB: ${org.name}`);
+        }).catch(err => {
+          console.error(`Error saving org settings for ${org.name}:`, err);
         });
       }
     });
