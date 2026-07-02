@@ -225,7 +225,7 @@ connectDB().then(() => {
           org.settings.footerText = org.settings.footerText.replace(/Cyberbells ITES services pvt ltd/gi, 'TrackBells').replace(/Cyberbells/gi, 'TrackBells');
           needsSave = true;
         }
-        if (org.settings.allowMobileApp !== true) {
+        if (org.settings.allowMobileApp === undefined) {
           org.settings.allowMobileApp = true;
           needsSave = true;
         }

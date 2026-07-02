@@ -95,6 +95,23 @@ const checkMobileAccess = async (req, res, next) => {
   if (isMobileRequest) {
     let orgId = req.user ? req.user.organizationId : null;
 
+    // Try to get token from header to find organization context for authenticated requests
+    if (!orgId && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded && decoded.id) {
+          const tempUser = await User.findById(decoded.id);
+          if (tempUser) {
+            orgId = tempUser.organizationId;
+          }
+        }
+      } catch (err) {
+        // Token might be expired or invalid, let the next middleware handle it
+      }
+    }
+
     // For non-authenticated requests (e.g. login), check body email
     if (!orgId && req.body && req.body.email) {
       try {
