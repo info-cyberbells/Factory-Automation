@@ -39,9 +39,9 @@ const SettingsDashboard = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (user && user.role === 'super_admin') {
+    if (user && (user.role === 'super_admin' || user.role === 'admin')) {
       setActiveTab('security');
-    } else if (user && user.role !== 'super_admin') {
+    } else {
       setActiveTab('branding');
     }
   }, [user]);
@@ -186,7 +186,7 @@ const SettingsDashboard = () => {
 
         {/* TABS NAVBAR */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '28px', borderBottom: '1px solid var(--border)', paddingBottom: '8px', overflowX: 'auto' }}>
-          {user?.role === 'super_admin' && (
+          {(user?.role === 'super_admin' || user?.role === 'admin') && (
             <button
               onClick={() => setActiveTab('security')}
               style={{
@@ -223,8 +223,7 @@ const SettingsDashboard = () => {
           </button>
         </div>
 
-        {/* TAB 1: SECURITY & COMPLIANCE */}
-        {activeTab === 'security' && user?.role === 'super_admin' && (
+        {activeTab === 'security' && (user?.role === 'super_admin' || user?.role === 'admin') && (
           <div className="glass-card" style={{ padding: '32px' }}>
             <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <IconShield style={{ color: 'var(--primary)' }} /> Security Settings
